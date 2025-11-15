@@ -1,0 +1,251 @@
+:root,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* 統一背景色（Bootstrap 本身背景是白的）*/
+body {
+  background-color: #f5f5f7;
+}
+:root,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background-color: #f5f5f7;
+}
+
+/* ===== 登入後外層背景 ===== */
+.app-shell {
+  min-height: 100vh;
+  background-color: #f5f5f7;
+}
+
+/* ===== 上方白色導覽列 ===== */
+.app-topbar {
+  width: 100%;
+  padding: 12px 24px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #f2e5dc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.app-avatar-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background-color: #ffe0c7;
+}
+
+.app-avatar-icon {
+  font-size: 18px;
+}
+
+.extra-small {
+  font-size: 11px;
+}
+
+.app-logout-btn span {
+  color: #ff7854;
+}
+
+/* ===== 首頁 hero 區（淡桃色背景） ===== */
+.home-hero {
+  background-color: #ffefe5;
+}
+
+/* ===== 模組卡片 ===== */
+.module-card {
+  border: none;
+  border-radius: 24px;
+  padding: 18px 20px;
+  background-color: #ffffff;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.05);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.module-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 24px rgba(0, 0, 0, 0.08);
+}
+
+.module-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #ffffff;
+}
+
+.module-icon--orange {
+  background-color: #f39c5a;
+}
+
+.module-icon--green {
+  background-color: #46b29d;
+}
+
+.module-icon--red {
+  background-color: #e74c3c;
+}
+
+.module-icon--purple {
+  background-color: #9b7bff;
+}
+
+.module-subtitle {
+  font-size: 13px;
+  color: #777777;
+}
+
+/* =========== LunchPicker 抽籤器頁 =========== */
+
+.lp-page {
+  padding: 24px 16px 32px;
+}
+
+/* 標題區 */
+.lp-header-block h3 {
+  font-weight: 600;
+}
+
+/* 搜尋框 */
+.lp-search-wrapper {
+  background-color: #ffffff;
+  border-radius: 999px;
+  padding-right: 8px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.05);
+}
+
+.lp-search-icon {
+  width: 40px;
+  font-size: 18px;
+  color: #999;
+}
+
+.lp-search-input {
+  border-radius: 999px;
+}
+
+.lp-search-send-btn {
+  border: none;
+  background-color: #63b8a5;
+  color: #ffffff;
+  border-radius: 999px;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+}
+
+/* 小連結按鈕 */
+.lp-inline-actions .lp-link-button {
+  font-size: 13px;
+  color: #777;
+}
+
+.lp-link-button:hover {
+  color: #555;
+}
+
+/* 最近地點 chip */
+.lp-chip {
+  border-radius: 999px;
+  border: 1px solid #e0d4cc;
+  padding: 6px 12px;
+  background-color: #ffffff;
+  font-size: 13px;
+}
+
+/* 篩選條件按鈕 */
+.lp-filter-trigger {
+  border-radius: 999px;
+  border: 1px solid #222;
+  background-color: #ffffff;
+  padding: 10px 16px;
+  font-size: 14px;
+}
+
+/* 主要抽籤按鈕 */
+.lp-primary-btn {
+  border-radius: 999px;
+  border: none;
+  padding: 10px 16px;
+  background-color: #f5a98a;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+/* Modal 背景 */
+.lp-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+}
+
+/* Modal 卡片 */
+.lp-modal-card {
+  width: min(600px, 92%);
+  max-height: 90vh;
+  background-color: #ffffff;
+  border-radius: 24px;
+  padding: 24px 24px 20px;
+  overflow-y: auto;
+}
+
+/* Tag 樣式（價格/類型） */
+.lp-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #e0d4cc;
+  background-color: #fdfbf9;
+  font-size: 13px;
+}
+/* Tag 樣式（價格/類型） */
+.lp-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #e0d4cc;
+  background-color: #fdfbf9;
+  font-size: 13px;
+}
+
+/* 讓它變成可按按鈕 */
+.lp-tag-btn {
+  cursor: pointer;
+  border: 1px solid #e0d4cc;
+  background-color: #fdfbf9;
+}
+
+/* 被選取時的樣式 */
+.lp-tag-active {
+  background-color: #f5a98a;
+  border-color: #f5a98a;
+  color: #ffffff;
+}
+
