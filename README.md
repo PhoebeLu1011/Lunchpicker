@@ -1,36 +1,16 @@
-## | How to run 
-### First-time installation（只有第一次需要安裝）
-```
-npm install
-npm install bootstrap
-```
-### Run（之後每次啟動只要輸入這個即可）
-```
-npm run dev
-```
-## | How to clone/pull/push
-### 1. Clone repo.
-```
-git clone https://github.com/PhoebeLu1011/Lunchpicker.git
-cd Lunchpicker
-```
-### 2. 轉移至&同步main
-```
-git switch main
-git pull origin main
-```
-### 3. 創建&切換至自己所建立的分支
-```
-# ex: git checkout -b feature/draw_lots
-git checkout -b <新分支名字>
-```
-### 完成開發後push
-```
-git add .
-git commit -m "填寫自己完成的事項(ex.抽籤功能完成)"
-```
-```
-# ex: git push -u origin feature/draw_lots
-git push -u origin <分支名字>
-```
-push完應該會有pull request merge前記得在群組講一聲
+# React + Vite
+
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+
+Currently, two official plugins are available:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+
+## React Compiler
+
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
