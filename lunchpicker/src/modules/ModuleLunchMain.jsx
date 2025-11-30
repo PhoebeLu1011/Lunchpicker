@@ -1,7 +1,19 @@
 // src/modules/ModuleLunchMain.jsx
+import React from "react";
 import { useState } from "react";
 import { geocodeAddress, fetchNearbyRestaurants } from "../api/locationApi";
-
+// 從 localStorage 讀出黑名單關鍵字
+// 會拿到像 ["火鍋", "燒烤"] 這種陣列
+function loadBlacklistKeywords() {
+  try {
+    const raw = localStorage.getItem("lunchpicker_blacklist");
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.error("讀取黑名單失敗", e);
+    return [];
+  }
+}
 export default function ModuleLunchMain() {
   const [address, setAddress] = useState("");
   const [infoMsg, setInfoMsg] = useState("");
@@ -87,17 +99,43 @@ export default function ModuleLunchMain() {
     await handleParseAddress();
   }
 
-  // 開始抽籤
-  function handleStartDraw() {
-    if (!restaurants.length) {
-      setInfoMsg("目前沒有可抽籤的餐廳，請先搜尋一個地點");
-      return;
-    }
-    const idx = Math.floor(Math.random() * restaurants.length);
-    const r = restaurants[idx];
-    setPicked(r);
-    setInfoMsg(`已隨機選出一間餐廳 👇`);
+// 開始抽籤（會套用黑名單）
+function handleStartDraw() {
+  console.log("handleStartDraw 被觸發了");
+  if (!restaurants.length) {
+    setInfoMsg("目前沒有可抽籤的餐廳，請先搜尋一個地點");
+    return;
   }
+
+  // 1. 讀黑名單
+  const blacklist = loadBlacklistKeywords();
+
+  // 2. 先假設全部餐廳都是候選
+  let candidates = restaurants;
+
+  // 3. 如果有設定黑名單，就把名稱或類型中有出現關鍵字的店排除
+  if (blacklist.length > 0) {
+    candidates = restaurants.filter((r) => {
+      const name = (r.name || "").toString();
+      const cuisine = (r.cuisine || "").toString();
+      const text = `${name} ${cuisine}`; // 把名字 + 類型串一起檢查
+      return !blacklist.some((word) => text.includes(word));
+    });
+  }
+
+  // 4. 全部都被黑名單擋掉
+  if (!candidates.length) {
+    setPicked(null);
+    setInfoMsg("所有餐廳都被黑名單排除了，請調整黑名單或放寬搜尋範圍");
+    return;
+  }
+
+  // 5. 從剩下的候選裡抽一間
+  const idx = Math.floor(Math.random() * candidates.length);
+  const r = candidates[idx];
+  setPicked(r);
+  setInfoMsg(`已隨機選出一間餐廳 👇`);
+}
 
   return (
     <div className="lp-page">
