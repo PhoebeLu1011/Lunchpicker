@@ -1,42 +1,76 @@
 // src/authClient.js
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
-const STORAGE_KEY = "lunchpicker_user";
+export async function login({ email, password }) {
+  const res = await fetch(`${API_BASE}/api/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, password }),
+  });
 
-// 模擬 /api/me
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok || !data.ok) {
+    return { ok: false, error: data.error || "登入失敗" };
+  }
+
+  // 把 JWT token 存起來（之後呼叫其他 API 要帶 Authorization）
+  if (data.token) {
+    localStorage.setItem("lp_token", data.token);
+  }
+
+  return {
+    ok: true,
+    user: data.user,
+    token: data.token,
+  };
+}
+
+export async function register({ email, password }) {
+  const res = await fetch(`${API_BASE}/api/auth/register`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok || !data.ok) {
+    return { ok: false, error: data.error || "註冊失敗" };
+  }
+
+  return { ok: true };
+}
+
+export function getToken() {
+  return localStorage.getItem("lp_token") || "";
+}
+
+export function logout() {
+  localStorage.removeItem("lp_token");
+}
+
 export async function getMe() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-// 模擬 /api/register
-export async function register({ username, password }) {
-  // 現在先假裝註冊一定成功
-  // 之後要接 Mongo Atlas 就在這裡改掉
-  if (!username || !password) {
-    return { ok: false, error: "帳號與密碼不能是空的" };
-  }
-  return { ok: true };
-}
-
-// 模擬 /api/login
-export async function login({ username, password }) {
-  if (!username || !password) {
-    return { ok: false, error: "請輸入帳號與密碼" };
+  const token = getToken();
+  if (!token) {
+    return null;              // 沒 token 就當沒登入
   }
 
-  // 假裝只要有輸入就成功
-  const user = { username };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-  return { ok: true, user };
-}
+  const res = await fetch(`${API_BASE}/api/auth/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
-// 模擬 /api/logout
-export async function logout() {
-  localStorage.removeItem(STORAGE_KEY);
-  return { ok: true };
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok || !data.ok) {
+    return null;              // token 壞掉/過期 → 當作沒登入
+  }
+
+  return data.user;           // 成功就直接回 user 物件
 }

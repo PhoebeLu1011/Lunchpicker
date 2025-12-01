@@ -1,16 +1,7 @@
-:root,
-body,
-#root {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  max-width: 100%;
-}
+/* ===========================
+   1. 全局 & 基底樣式
+   =========================== */
 
-/* 統一背景色（Bootstrap 本身背景是白的）*/
-body {
-  background-color: #f5f5f7;
-}
 :root,
 body,
 #root {
@@ -26,21 +17,91 @@ body {
   background-color: #f5f5f7;
 }
 
-/* ===== 登入後外層背景 ===== */
+/* 登入後外層背景 */
 .app-shell {
   min-height: 100vh;
   background-color: #f5f5f7;
 }
 
-/* ===== 上方白色導覽列 ===== */
+.extra-small {
+  font-size: 11px;
+}
+
+/* ===========================
+   2. TopBar & 漢堡選單
+   =========================== */
+
+/* 上方白色導覽列 */
 .app-topbar {
   width: 100%;
-  padding: 12px 24px;
-  background-color: #ffffff;
-  border-bottom: 1px solid #f2e5dc;
+  padding: 0.7rem 1.2rem;
+  background-color: #fafafa;
+  border-bottom: 1px solid #e5e5e5;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+/* 漢堡按鈕 */
+.hamburger-btn {
+  border: 1px solid #ccc;
+  background: #fff;
+  width: 40px;
+  height: 32px;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  line-height: 1rem;
+  cursor: pointer;
+}
+
+/* 右上角展開的選單 */
+.side-menu {
+  position: fixed;
+  top: 60px;
+  right: 12px;
+  width: 180px;
+  background: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  padding: 0.7rem 0;
+  z-index: 999;
+}
+
+.side-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.side-item:hover {
+  background: #f4f4f4;
+}
+
+.side-item.active {
+  background: #e9ecef;
+  font-weight: 600;
+}
+
+.logout {
+  color: #d22;
+}
+
+/* ===========================
+   3. 首頁 & 模組卡片
+   =========================== */
+
+/* 首頁 hero 區（淡桃色背景） */
+.home-hero {
+  background-color: #ffefe5;
 }
 
 .app-avatar-circle {
@@ -54,20 +115,7 @@ body {
   font-size: 18px;
 }
 
-.extra-small {
-  font-size: 11px;
-}
-
-.app-logout-btn span {
-  color: #ff7854;
-}
-
-/* ===== 首頁 hero 區（淡桃色背景） ===== */
-.home-hero {
-  background-color: #ffefe5;
-}
-
-/* ===== 模組卡片 ===== */
+/* 模組卡片 */
 .module-card {
   border: none;
   border-radius: 24px;
@@ -114,7 +162,9 @@ body {
   color: #777777;
 }
 
-/* =========== LunchPicker 抽籤器頁 =========== */
+/* ===========================
+   4. LunchPicker 抽籤器頁
+   =========================== */
 
 .lp-page {
   padding: 24px 16px 32px;
@@ -223,17 +273,6 @@ body {
   background-color: #fdfbf9;
   font-size: 13px;
 }
-/* Tag 樣式（價格/類型） */
-.lp-tag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 1px solid #e0d4cc;
-  background-color: #fdfbf9;
-  font-size: 13px;
-}
 
 /* 讓它變成可按按鈕 */
 .lp-tag-btn {
@@ -249,3 +288,137 @@ body {
   color: #ffffff;
 }
 
+/* ===========================
+   5. Profile 個人資料頁
+   =========================== */
+
+.profile-container {
+  background: #ffffffcc; /* 半透明白，看起來比較柔和 */
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+}
+
+.profile-avatar-wrapper {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.profile-avatar {
+  width: 90px;
+  height: 90px;
+  background: #ffe5db;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.profile-field {
+  margin-bottom: 1.4rem;
+}
+
+.profile-label {
+  font-size: 0.9rem;
+  color: #777;
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.profile-input {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.profile-input[readonly] {
+  background: #f8f8f8;
+}
+
+.profile-section-title {
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #555;
+}
+
+.profile-info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.6rem 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.profile-info-value {
+  font-weight: 600;
+}
+
+.profile-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 3rem;
+}
+
+.profile-btn-cancel {
+  flex: 1;
+  padding: 0.8rem;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #ffffff;
+}
+
+.profile-btn-save {
+  flex: 1;
+  padding: 0.8rem;
+  border-radius: 8px;
+  border: none;
+  background: #ffa48c;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.profile-btn-save:disabled {
+  opacity: 0.5;
+}
+
+.profile-footer {
+  margin-top: 3rem;
+  padding: 1rem;
+  font-size: 0.85rem;
+  color: #777;
+  text-align: center;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.profile-btn-edit {
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+  border-radius: 999px;
+  border: 1px solid #ffa48c;
+  background: #fff7f3;
+  color: #e28763;
+}
+
+/* 外層：ModuleWrapper 裡的白色卡片 */
+.module-wrapper-card {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;  /* 若想讓內容靠左，這必須是 0 */
+  max-width: 900px;   /* 自己限制一下不要太寬 */
+  margin-left: 0;     /* ✨靠左 */
+  margin-right: auto;
+}
+
+/* 手機 / 小螢幕時，padding 小一點 */
+@media (max-width: 768px) {
+  .module-wrapper-card {
+    padding: 1.5rem 1.25rem;
+  }
+}

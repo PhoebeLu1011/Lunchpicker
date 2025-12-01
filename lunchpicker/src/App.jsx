@@ -25,12 +25,12 @@ export default function App() {
     );
   }
 
-  // ❌ 未登入 → 去 AuthPage
+  //  未登入 → 去 AuthPage
   if (!user) {
     return <AuthPage onLogin={setUser} />;
   }
 
-  // ✔ 已登入 → 主頁面
+  //  已登入 → 主頁面
   return <HomePage user={user} onLogout={async () => {
     await logout();
     setUser(null);

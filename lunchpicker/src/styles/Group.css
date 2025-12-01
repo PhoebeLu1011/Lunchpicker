@@ -1,0 +1,282 @@
+/* ===== 根布局 ===== */
+.group-page {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 20px 40px;
+}
+
+/* ===== 卡片統一風格 ===== */
+.group-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 22px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+  border: 1px solid #e8e8e8;
+}
+
+/* ===== 上面兩個大按鈕（建立 / 加入） ===== */
+.group-top-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.action-card {
+  padding: 28px 20px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: 0.25s;
+}
+
+.create-card {
+  background: #C2DCD3;
+}
+
+.join-card {
+  background: #EAF4EF;
+}
+
+.action-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+}
+
+.action-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.action-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #222;
+}
+
+.action-desc {
+  font-size: 14px;
+  color: #555;
+  margin-top: 4px;
+}
+
+/* ===== 標題 ===== */
+.section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 12px;
+}
+
+.section-desc {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+/* ===== 我的團隊列表 ===== */
+.my-groups-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.my-group-item {
+  padding: 20px;
+  text-align: left;
+  border: none;
+  background: #fff;
+}
+
+.my-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.my-group-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #222;
+}
+
+.my-group-badge {
+  font-size: 13px;
+  background: #C2DCD3;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+/* ===== 建立團隊表單 ===== */
+.group-create-layout {
+  display: grid;
+  gap: 20px;
+}
+
+.group-input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  margin-bottom: 16px;
+  font-size: 16px;
+}
+
+/* ===== 主按鈕 ===== */
+.primary-btn {
+  background: #6FAF9A;
+  color: white;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.primary-btn:hover {
+  background: #5a9d89;
+}
+
+/* ===== 代碼區塊 ===== */
+.code-box {
+  font-size: 28px;
+  font-weight: 800;
+  font-family: monospace;
+  background: #F3F5F4;
+  padding: 10px 16px;
+  border-radius: 12px;
+}
+
+.code-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ===== 小圖示按鈕 ===== */
+.icon-btn {
+  background: #dfe7e3;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  background: #cbd9d3;
+}
+
+/* ===== 成員列表 ===== */
+.member-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.member-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.member-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.leader-crown {
+  font-size: 18px;
+}
+
+.member-name {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* 參加 / 不參加按鈕 */
+.chip-btn {
+  background: #C2DCD3;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+/* ===== 其他按鈕 ===== */
+.outline-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #aaa;
+  background: white;
+  cursor: pointer;
+}
+
+.danger-link-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: #ffe5e5;
+  color: #b03f3f;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ===== 空狀態 ===== */
+.empty-card {
+  text-align: center;
+  padding: 32px 20px;
+}
+
+.empty-icon {
+  font-size: 40px;
+}
+
+.empty-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: 12px;
+}
+
+.empty-desc {
+  font-size: 14px;
+  margin-top: 4px;
+  color: #555;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;               /* 箭頭與文字距離 */
+  background: transparent;
+  border: none;
+  color: #4a5c54;        /* 深綠灰色，柔和不刺眼 */
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 2px;      /* 小 padding，讓它靠左緊貼 */
+  margin-bottom: 14px;   /* 與下方卡片的距離 */
+  transition: 0.2s ease;
+}
+
+.back-btn:hover {
+  color: #365045;        /* hover 更深，看起來有反饋 */
+  transform: translateX(-2px);
+}
+
+.back-btn:active {
+  transform: translateX(-4px);
+}
+
+.back-btn::before {
+  font-size: 18px;
+  font-weight: 700;
+}
