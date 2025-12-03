@@ -280,3 +280,215 @@
   font-size: 18px;
   font-weight: 700;
 }
+
+/* Group.css 裡面加 */
+.join-layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.join-form-card {
+  flex: 2;
+  min-width: 260px;
+}
+
+.join-info-card {
+  flex: 1;
+  min-width: 220px;
+}
+/* -------- 候選餐廳區塊 -------- */
+
+.group-candidates-card {
+  padding: 18px 20px;
+}
+
+.group-candidates-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  margin-left: 6px;
+}
+
+.pill-count {
+  background: #ffe5dd;
+  color: #d5775a;
+}
+
+.pill-closed {
+  background: #eee;
+  color: #888;
+}
+
+/* chip danger 用在「關閉投票」 */
+.chip-danger {
+  background: #ffbfa0;
+  color: #7a3b1e;
+}
+
+/* 新增表單 */
+.candidate-form {
+  margin-top: 12px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.candidate-form .form-row label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 4px;
+  color: #555;
+}
+
+/* 空狀態 */
+.candidate-empty {
+  padding: 24px 12px 18px;
+  text-align: center;
+  color: #999;
+}
+
+.candidate-empty-icon {
+  font-size: 28px;
+  margin-bottom: 6px;
+}
+
+.candidate-empty-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.candidate-empty-text {
+  font-size: 13px;
+}
+
+/* 候選卡片列表 */
+.candidate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.candidate-item {
+  border-radius: 14px;
+  border: 1px solid #f1e9e6;
+  padding: 12px 14px;
+  background: #fff;
+}
+
+/* 上半：名稱 + 按鈕 */
+.candidate-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.candidate-info {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.candidate-index {
+  font-size: 16px;
+  font-weight: 600;
+  color: #444;
+  margin-top: 2px;
+}
+
+.candidate-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.candidate-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.candidate-address {
+  font-size: 13px;
+  color: #777;
+}
+
+.candidate-meta {
+  font-size: 12px;
+  color: #999;
+}
+
+/* 按鈕區 */
+.candidate-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.candidate-crown {
+  font-size: 18px;
+}
+
+.candidate-vote-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: #f2f2f2;
+  cursor: pointer;
+  font-size: 17px;
+}
+
+.candidate-vote-btn.voted {
+  background: #8fd7aa;
+}
+
+.candidate-vote-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 下半：票數 + 進度條 */
+.candidate-vote-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+.candidate-vote-count {
+  width: 50px;
+  color: #666;
+}
+
+.candidate-progress {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: #f0f0f0;
+  overflow: hidden;
+}
+
+.candidate-progress-inner {
+  height: 100%;
+  background: #8fd7aa;
+}
+
+.candidate-percent {
+  width: 40px;
+  text-align: right;
+  color: #666;
+}

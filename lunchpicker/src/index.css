@@ -12,16 +12,35 @@ body,
 }
 
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-  background-color: #f5f5f7;
+  margin: 0;
+  min-height: 100vh;
 }
 
+
 /* 登入後外層背景 */
+/* 登入後外層背景：整頁統一渲染 */
 .app-shell {
   min-height: 100vh;
-  background-color: #f5f5f7;
+
+  /* ✨ 整頁淡霧渲染：奶茶色系、不粉不橘 */
+  background: radial-gradient(
+      circle at 20% 20%,
+      rgba(243, 234, 225, 0.8),
+      transparent 60%
+    ),
+    radial-gradient(
+      circle at 80% 60%,
+      rgba(240, 231, 223, 0.7),
+      transparent 60%
+    ),
+    radial-gradient(
+      circle at 50% 100%,
+      rgba(247, 239, 233, 0.8),
+      transparent 70%
+    ),
+    #f8f4ef;
 }
+
 
 .extra-small {
   font-size: 11px;
@@ -101,7 +120,7 @@ body {
 
 /* 首頁 hero 區（淡桃色背景） */
 .home-hero {
-  background-color: #ffefe5;
+  background-color: transparent;
 }
 
 .app-avatar-circle {
@@ -410,9 +429,9 @@ body {
   background: transparent;
   box-shadow: none;
   border-radius: 0;
-  padding: 0;  /* 若想讓內容靠左，這必須是 0 */
-  max-width: 900px;   /* 自己限制一下不要太寬 */
-  margin-left: 0;     /* ✨靠左 */
+  padding: 0;          /* 內容靠左 */
+  max-width: 900px;
+  margin-left: 0;
   margin-right: auto;
 }
 
@@ -421,4 +440,323 @@ body {
   .module-wrapper-card {
     padding: 1.5rem 1.25rem;
   }
+}
+
+/* ===========================
+   6. 自訂餐廳抽籤 Simple 模組
+   =========================== */
+
+/* 整頁：沿用 lp-page 的 padding，背景使用 home-hero 的淡桃色(#ffefe5) */
+.simple-page {
+  /* home-hero 已是 #ffefe5，這裡主要維持排版 */
+}
+
+/* 使用說明那張白卡片 */
+.simple-tip-card {
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 16px 18px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.05);
+}
+
+/* 新增餐廳按鈕（右上角） */
+.simple-add-btn {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px dashed #f5a98a;
+  background-color: #fff7f3;
+  color: #e28763;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.simple-add-btn:hover {
+  background-color: #ffe3d3;
+}
+
+/* 表單卡片 */
+.simple-form-card {
+  background-color: #ffffff;
+  border-radius: 18px;
+  padding: 14px 16px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.04);
+}
+
+.simple-label {
+  font-size: 0.8rem;
+  color: #777;
+  margin-bottom: 0.25rem;
+}
+
+/* 主要列表卡片 */
+.simple-list-card {
+  margin-top: 12px;
+  background-color: #ffffff;
+  border-radius: 18px;
+  padding: 14px 16px 16px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.05);
+}
+
+/* 按鈕樣式 */
+.simple-btn-primary {
+  border-radius: 999px;
+  border: none;
+  padding: 6px 14px;
+  background-color: #f5a98a;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.simple-btn-primary:hover {
+  background-color: #f09473;
+}
+
+.simple-btn-ghost {
+  border-radius: 999px;
+  padding: 6px 14px;
+  border: 1px solid #ddd;
+  background-color: #ffffff;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.simple-btn-ghost:hover {
+  background-color: #f8f8f8;
+}
+
+.simple-btn-text {
+  border: none;
+  background: transparent;
+  font-size: 0.8rem;
+  color: #999;
+  cursor: pointer;
+}
+
+.simple-btn-text:hover {
+  color: #666;
+}
+
+/* 空狀態 */
+.simple-empty {
+  text-align: center;
+  padding: 24px 10px;
+}
+
+.simple-empty .empty-icon {
+  font-size: 32px;
+  margin-bottom: 6px;
+}
+
+/* 抽籤結果卡片 + 動畫 */
+.simple-draw-result {
+  background-color: #fff7f3;
+  border-radius: 16px;
+  padding: 10px 14px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
+  animation: lp-draw-pop 0.45s ease-out;
+}
+
+.simple-draw-result .draw-label {
+  font-size: 0.8rem;
+  color: #e28763;
+  margin-bottom: 2px;
+}
+
+.simple-draw-result .draw-name {
+  font-weight: 600;
+}
+
+.simple-draw-result .draw-category {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+/* 抽籤結果的彈跳動畫 */
+@keyframes lp-draw-pop {
+  0% {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.03);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* 餐廳列表 */
+.simple-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.simple-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0e2d8;
+  font-size: 0.9rem;
+}
+
+.simple-list-item:last-child {
+  border-bottom: none;
+}
+
+.simple-list-item .restaurant-name {
+  font-weight: 500;
+}
+
+.simple-list-item .restaurant-meta {
+  font-size: 0.8rem;
+  color: #777;
+}
+
+/* 刪除按鈕 */
+.simple-item-delete {
+  border: none;
+  background: transparent;
+  font-size: 0.8rem;
+  color: #d55;
+  cursor: pointer;
+}
+
+.simple-item-delete:hover {
+  text-decoration: underline;
+}
+
+/* 手機調整 */
+@media (max-width: 576px) {
+  .simple-form-card,
+  .simple-list-card,
+  .simple-tip-card {
+    padding: 12px 12px 14px;
+  }
+}
+
+/* ===========================
+   7. Group / 共用卡片 & 標籤
+   =========================== */
+
+/* 成員狀態 select */
+.member-status-select {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #f0d9c8;
+  background: #fff;
+  font-size: 0.85rem;
+  color: #444;
+  outline: none;
+}
+
+.member-status-select:focus {
+  box-shadow: 0 0 0 2px rgba(255, 173, 128, 0.3);
+}
+
+/* 成員狀態 tag */
+.member-status-tag {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #fdf3ea;
+  color: #666;
+  font-size: 0.8rem;
+}
+
+/* 共用 section 卡片（GroupDetail 等） */
+.card-section {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px 22px;
+  margin-bottom: 22px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f2e8e4; /* 柔膚色邊線 */
+}
+
+/* 標題列 */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.card-title {
+  font-size: 17px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 公告：新增公告按鈕 */
+.add-btn {
+  background: #ffe8dd;
+  border: 1px solid #ffbfa6;
+  color: #d56941;
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.add-btn:hover {
+  background: #ffd9c8;
+}
+
+/* 公告列表 */
+.announce-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.announce-item {
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+/* 無公告時 */
+.empty-text {
+  color: #999;
+  font-size: 14px;
+}
+
+/* 加入代碼區 icon (# 小標籤) */
+.code-icon {
+  background: #ffe5d8;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: #d26a42;
+  font-size: 13px;
+}
+
+/* 加入代碼：右上複製按鈕 */
+.copy-btn {
+  background: #fbeee9;
+  border: 1px solid #f2c8b8;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.copy-btn:hover {
+  background: #f7e1d7;
+}
+
+/* 加入代碼：代碼文字 */
+.code-display {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 12px 0 4px;
+  text-align: left;
+  color: #333;
 }

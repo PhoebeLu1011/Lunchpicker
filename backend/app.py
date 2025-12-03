@@ -104,6 +104,7 @@ def serialize_group(group_doc, detail=False):
         "ownerId": str(group_doc.get("ownerId")) if group_doc.get("ownerId") else None,
         "createdAt": group_doc.get("createdAt").isoformat() if group_doc.get("createdAt") else None,
         "closed": group_doc.get("closed", False),
+        "votingClosed": group_doc.get("votingClosed", False),  # 🔸新增
     }
 
     # summary mode（我的團隊列表用）
@@ -115,11 +116,17 @@ def serialize_group(group_doc, detail=False):
     # detail mode（團隊內頁用）
     members_out = []
     for m in group_doc.get("members", []):
+        raw_status = m.get("status")
+        if not raw_status or raw_status == "unknown":
+            normalized_status = "join"
+        else:
+            normalized_status = raw_status
+
         members_out.append({
             "userId": str(m.get("userId")),
             "displayName": m.get("displayName"),
             "role": m.get("role"),
-            "status": m.get("status"),
+            "status": normalized_status,
             "joinedAt": m.get("joinedAt").isoformat() if m.get("joinedAt") else None,
         })
 
@@ -131,12 +138,39 @@ def serialize_group(group_doc, detail=False):
             "createdAt": a.get("createdAt").isoformat() if a.get("createdAt") else None,
         })
 
+    # 方便算「我投哪一個」
+    current_uid = None
+    if getattr(g, "current_user", None):
+        current_uid = g.current_user["_id"]
+
     cands_out = []
-    for c in group_doc.get("candidates", []):
+    candidates = group_doc.get("candidates", [])
+    total_votes = 0
+    # 先算總票數
+    for c in candidates:
+        voters = c.get("voters", [])
+        total_votes += len(voters)
+
+    for c in candidates:
+        voters = c.get("voters", [])
+        vote_count = len(voters)
+        has_my_vote = False
+        if current_uid is not None:
+            has_my_vote = current_uid in voters
+
+        percent = 0
+        if total_votes > 0:
+            percent = round(vote_count * 100 / total_votes)
+
         cands_out.append({
             "id": str(c.get("_id")),
             "name": c.get("name"),
+            "address": c.get("address"),
+            "createdByName": c.get("createdByName"),
             "createdAt": c.get("createdAt").isoformat() if c.get("createdAt") else None,
+            "voteCount": vote_count,
+            "percent": percent,
+            "hasMyVote": has_my_vote,
         })
 
     base["members"] = members_out
@@ -145,6 +179,7 @@ def serialize_group(group_doc, detail=False):
     base["memberCount"] = len(members_out)
 
     return base
+
 
 #====================
 #註冊 API
@@ -259,13 +294,25 @@ def logout():
 def update_profile():
     data = request.get_json() or {}
     nickname = (data.get("nickname") or "").strip()
-    # 這裡可以決定 email 能不能改
 
     users_col.update_one(
         {"_id": g.current_user["_id"]},
         {"$set": {"name": nickname}}
     )
-    ...
+
+    # 重新查最新資料（可選）
+    user = users_col.find_one({"_id": g.current_user["_id"]})
+
+    return jsonify({
+        "ok": True,
+        "user": {
+            "id": str(user["_id"]),
+            "email": user["email"],
+            "name": user.get("name"),
+            "createdAt": user.get("createdAt").isoformat() if user.get("createdAt") else None,
+        }
+    })
+
 @app.route("/api/groups", methods=["POST"])
 @login_required
 def create_group():
@@ -303,6 +350,7 @@ def create_group():
         "ownerId": g.current_user["_id"],
         "createdAt": now,
         "closed": False,
+        "votingClosed": False,
         "members": [leader_member],
         "announcements": [],
         "candidates": [],
@@ -412,6 +460,275 @@ def join_group_by_code():
         "group": serialize_group(group, detail=True)
     })
 
+@app.route("/api/groups/<group_id>/participation", methods=["POST"])
+@login_required
+def update_participation(group_id):
+    data = request.get_json() or {}
+    status = data.get("status")
+    if status not in ("join", "not_join"):
+        return jsonify({"ok": False, "error": "status 必須是 join 或 not_join"}), 400
+
+    try:
+        oid = ObjectId(group_id)
+    except Exception:
+        return jsonify({"ok": False, "error": "group_id 無效"}), 400
+
+    uid = g.current_user["_id"]
+
+    result = groups_col.update_one(
+        {"_id": oid, "members.userId": uid},
+        {"$set": {"members.$.status": status}}
+    )
+    if result.matched_count == 0:
+        return jsonify({"ok": False, "error": "找不到團隊或不是成員"}), 404
+
+    group = groups_col.find_one({"_id": oid})
+    return jsonify({"ok": True, "group": serialize_group(group, detail=True)})
+
+@app.route("/api/groups/<group_id>/announcements", methods=["POST"])
+@login_required
+def add_announcement(group_id):
+    data = request.get_json() or {}
+    content = (data.get("content") or "").strip()
+    if not content:
+        return jsonify({"ok": False, "error": "公告內容必填"}), 400
+
+    try:
+        oid = ObjectId(group_id)
+    except Exception:
+        return jsonify({"ok": False, "error": "group_id 無效"}), 400
+
+    # 只有團長可以發公告
+    uid = g.current_user["_id"]
+    group = groups_col.find_one({"_id": oid, "ownerId": uid})
+    if not group:
+        return jsonify({"ok": False, "error": "只有團長可以發布公告"}), 403
+
+    ann = {
+        "_id": ObjectId(),
+        "content": content,
+        "createdAt": datetime.datetime.utcnow(),
+    }
+
+    groups_col.update_one(
+        {"_id": oid},
+        {"$push": {"announcements": ann}}
+    )
+
+    group = groups_col.find_one({"_id": oid})
+    return jsonify({"ok": True, "group": serialize_group(group, detail=True)})
+
+@app.route("/api/groups/<group_id>/candidates", methods=["POST"])
+@login_required
+def add_candidate(group_id):
+    data = request.get_json() or {}
+    name = (data.get("name") or "").strip()
+    address = (data.get("address") or "").strip()
+
+    if not name:
+        return jsonify({"ok": False, "error": "餐廳名稱必填"}), 400
+
+    try:
+        oid = ObjectId(group_id)
+    except Exception:
+        return jsonify({"ok": False, "error": "group_id 無效"}), 400
+
+    # 只要是成員就可以加候選餐廳；投票關閉時也可以視情況鎖住（這裡我先允許）
+    uid = g.current_user["_id"]
+    display_name = g.current_user.get("name") or g.current_user["email"]
+
+    group = groups_col.find_one({"_id": oid, "members.userId": uid})
+    if not group:
+        return jsonify({"ok": False, "error": "你不是此團隊成員"}), 403
+
+    cand = {
+        "_id": ObjectId(),
+        "name": name,
+        "address": address or None,
+        "createdById": uid,
+        "createdByName": display_name,
+        "createdAt": datetime.datetime.utcnow(),
+        "voters": [],  # 一開始沒人投
+    }
+
+    groups_col.update_one(
+        {"_id": oid},
+        {"$push": {"candidates": cand}}
+    )
+
+    group = groups_col.find_one({"_id": oid})
+    return jsonify({"ok": True, "group": serialize_group(group, detail=True)})
+
+@app.route("/api/groups/<group_id>/close", methods=["POST"])
+@login_required
+def close_group(group_id):
+    try:
+        oid = ObjectId(group_id)
+    except Exception:
+        return jsonify({"ok": False, "error": "group_id 無效"}), 400
+
+    uid = g.current_user["_id"]
+
+    result = groups_col.update_one(
+        {"_id": oid, "ownerId": uid},
+        {"$set": {"closed": True}}
+    )
+    if result.matched_count == 0:
+        return jsonify({"ok": False, "error": "找不到團隊或你不是團長"}), 403
+
+    group = groups_col.find_one({"_id": oid})
+    return jsonify({"ok": True, "group": serialize_group(group, detail=True)})
+
+@app.route("/api/groups/<group_id>", methods=["DELETE"])
+@login_required
+def delete_group(group_id):
+    try:
+        oid = ObjectId(group_id)
+    except Exception:
+        return jsonify({"ok": False, "error": "group_id 無效"}), 400
+
+    uid = g.current_user["_id"]
+
+    result = groups_col.delete_one({"_id": oid, "ownerId": uid})
+    if result.deleted_count == 0:
+        return jsonify({"ok": False, "error": "找不到團隊或你不是團長"}), 403
+
+    return jsonify({"ok": True})
+
+@app.route("/api/groups/<group_id>/vote", methods=["POST"])
+@login_required
+def update_vote(group_id):
+    data = request.get_json() or {}
+    cand_id = data.get("candidateId")  # 可以是 None (取消投票)
+
+    try:
+        oid = ObjectId(group_id)
+    except Exception:
+        return jsonify({"ok": False, "error": "group_id 無效"}), 400
+
+    uid = g.current_user["_id"]
+
+    group = groups_col.find_one({"_id": oid, "members.userId": uid})
+    if not group:
+        return jsonify({"ok": False, "error": "找不到團隊或你不是成員"}), 404
+
+    if group.get("votingClosed", False):
+        return jsonify({"ok": False, "error": "投票已關閉"}), 403
+
+    candidates = group.get("candidates", [])
+    target_oid = None
+    if cand_id:
+        try:
+            target_oid = ObjectId(cand_id)
+        except Exception:
+            return jsonify({"ok": False, "error": "candidateId 無效"}), 400
+
+    # 更新 voters：先從所有候選移除我
+    changed = False
+    for c in candidates:
+        voters = c.get("voters", [])
+        if uid in voters:
+            voters = [v for v in voters if v != uid]
+            c["voters"] = voters
+            changed = True
+
+    # 如果有指定新的 candidate，幫我加回去（代表投這一家）
+    if target_oid is not None:
+        found_target = False
+        for c in candidates:
+            if c.get("_id") == target_oid:
+                voters = c.get("voters", [])
+                if uid not in voters:
+                    voters.append(uid)
+                    c["voters"] = voters
+                    changed = True
+                found_target = True
+                break
+        if not found_target:
+            return jsonify({"ok": False, "error": "找不到此候選餐廳"}), 404
+
+    if changed:
+        groups_col.update_one(
+            {"_id": oid},
+            {"$set": {"candidates": candidates}}
+        )
+
+    group = groups_col.find_one({"_id": oid})
+    return jsonify({"ok": True, "group": serialize_group(group, detail=True)})
+
+@app.route("/api/groups/<group_id>/vote_close", methods=["POST"])
+@login_required
+def close_vote(group_id):
+    try:
+        oid = ObjectId(group_id)
+    except Exception:
+        return jsonify({"ok": False, "error": "group_id 無效"}), 400
+
+    uid = g.current_user["_id"]
+
+    # 只有 owner/團長可以關閉投票
+    result = groups_col.update_one(
+        {"_id": oid, "ownerId": uid},
+        {"$set": {"votingClosed": True}}
+    )
+    if result.matched_count == 0:
+        return jsonify({"ok": False, "error": "找不到團隊或你不是團長"}), 403
+
+    group = groups_col.find_one({"_id": oid})
+    return jsonify({"ok": True, "group": serialize_group(group, detail=True)})
+
+@app.route("/api/groups/<group_id>/member_status", methods=["POST"])
+@login_required
+def update_member_status(group_id):
+    data = request.get_json() or {}
+    member_id = data.get("memberId")
+    status = data.get("status")
+
+    if status not in ("join", "not_join"):
+        return jsonify({"ok": False, "error": "status 必須是 join / not_join "}), 400
+
+    if not member_id:
+        return jsonify({"ok": False, "error": "memberId 必填"}), 400
+
+    try:
+        oid = ObjectId(group_id)
+        target_uid = ObjectId(member_id)
+    except Exception:
+        return jsonify({"ok": False, "error": "group_id 或 memberId 無效"}), 400
+
+    uid = g.current_user["_id"]
+
+    # 只有 owner / leader 可以改所有人
+    group = groups_col.find_one({"_id": oid})
+    if not group:
+        return jsonify({"ok": False, "error": "找不到團隊"}), 404
+
+    is_leader = (
+        group.get("ownerId") == uid or
+        any(m.get("userId") == uid and m.get("role") == "leader" for m in group.get("members", []))
+    )
+    if not is_leader:
+        return jsonify({"ok": False, "error": "只有團長可以修改其他人狀態"}), 403
+
+    # 更新特定 member
+    members = group.get("members", [])
+    updated = False
+    for m in members:
+        if m.get("userId") == target_uid:
+            m["status"] = status
+            updated = True
+            break
+
+    if not updated:
+        return jsonify({"ok": False, "error": "找不到此成員"}), 404
+
+    groups_col.update_one(
+        {"_id": oid},
+        {"$set": {"members": members}}
+    )
+
+    group = groups_col.find_one({"_id": oid})
+    return jsonify({"ok": True, "group": serialize_group(group, detail=True)})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

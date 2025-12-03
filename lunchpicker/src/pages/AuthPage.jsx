@@ -1,6 +1,8 @@
 // src/pages/AuthPage.jsx
 import { useState } from "react";
 import { login, register } from "../authClient";
+import LunchRunner from "../components/LunchRunner";
+import "./AuthPage.css"; // 等一下加一些小樣式
 
 export default function AuthPage({ onLogin }) {
   const [mode, setMode] = useState("login");
@@ -15,7 +17,7 @@ export default function AuthPage({ onLogin }) {
     const res = await login({ email, password });
     if (res.ok) {
       setMsg("");
-      onLogin(res.user); // 上層可以拿到 user，token 在 authClient 裡存
+      onLogin(res.user);
     } else {
       setMsg(res.error || "登入失敗");
     }
@@ -37,15 +39,22 @@ export default function AuthPage({ onLogin }) {
   }
 
   return (
-    <div className="container-fluid min-vh-100 d-flex justify-content-center align-items-center">
-      <div className="col-10 col-sm-6 col-md-4">
-        <div className="card p-4 shadow-sm">
+    <div className="auth-page bg-light min-vh-100 d-flex justify-content-center align-items-center">
+      <div className="auth-card-wrapper col-11 col-sm-8 col-md-5 col-lg-4">
+        {/* 👇 跑步吃飯動畫放在卡片上方 */}
+        <LunchRunner />
+
+        <div className="card auth-card p-4 shadow-sm">
+          <h1 className="h4 text-center mb-3 fw-bold text-primary">
+            LunchPicker
+          </h1>
+
           <div className="btn-group w-100 mb-3">
             <button
               type="button"
               className={
-                "btn w-50 " +
-                (mode === "login" ? "btn-primary" : "btn-outline-secondary")
+                "btn w-50 auth-toggle-btn " +
+                (mode === "login" ? "btn-primary" : "btn-outline-primary")
               }
               onClick={() => {
                 setMode("login");
@@ -57,8 +66,8 @@ export default function AuthPage({ onLogin }) {
             <button
               type="button"
               className={
-                "btn w-50 " +
-                (mode === "register" ? "btn-primary" : "btn-outline-secondary")
+                "btn w-50 auth-toggle-btn " +
+                (mode === "register" ? "btn-primary" : "btn-outline-primary")
               }
               onClick={() => {
                 setMode("register");
@@ -71,7 +80,7 @@ export default function AuthPage({ onLogin }) {
 
           {mode === "login" ? (
             <form onSubmit={handleLogin}>
-              <label className="form-label">
+              <label className="form-label w-100">
                 Email
                 <input
                   name="email"
@@ -80,7 +89,7 @@ export default function AuthPage({ onLogin }) {
                   required
                 />
               </label>
-              <label className="form-label mt-3">
+              <label className="form-label w-100 mt-3">
                 密碼
                 <input
                   name="password"
@@ -93,7 +102,7 @@ export default function AuthPage({ onLogin }) {
             </form>
           ) : (
             <form onSubmit={handleRegister}>
-              <label className="form-label">
+              <label className="form-label w-100">
                 Email
                 <input
                   name="email"
@@ -102,7 +111,7 @@ export default function AuthPage({ onLogin }) {
                   required
                 />
               </label>
-              <label className="form-label mt-3">
+              <label className="form-label w-100 mt-3">
                 密碼
                 <input
                   name="password"

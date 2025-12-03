@@ -1,0 +1,20 @@
+/* src/pages/AuthPage.css */
+
+.auth-page {
+  /* 如果你其他頁有自訂背景色，可以改在這裡 */
+  /* 例如：background: #f5f5f5; */
+}
+
+.auth-card-wrapper {
+  max-width: 420px;
+}
+
+.auth-card {
+  border: none;
+  border-radius: 16px;
+}
+
+/* 切換按鈕做成膠囊形狀 */
+.auth-toggle-btn {
+  border-radius: 999px !important;
+}
