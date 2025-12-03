@@ -16,7 +16,7 @@ import string
 
 app = Flask(__name__)
 
-# ✅ CORS 設定
+# CORS 設定
 CORS(
     app,
     resources={r"/api/*": {"origins": [
