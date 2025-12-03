@@ -44,3 +44,69 @@ git commit -m "填寫自己完成的事項(ex.抽籤功能完成)"
 git push -u origin <分支名字>
 ```
 push完應該會有pull request merge前記得在群組講一聲
+
+## | File Structure
+```
+LUNCHPICKER/
+│
+├── backend/
+│   ├── .venv/
+│   ├── .env
+│   ├── .gitignore
+│   ├── app.py
+│   └── requirements.txt
+│
+├── lunchpicker/
+│   ├── node_modules/
+│   ├── public/
+│   │   └── ... (靜態資源)
+│   │
+│   └── src/
+│       ├── api/
+│       │   ├── groupApi.js
+│       │   └── locationApi.js
+│       │
+│       ├── assets/
+│       │   └── react.svg
+│       │
+│       ├── components/
+│       │   ├── LunchRunner.css
+│       │   ├── LunchRunner.jsx
+│       │   └── TopBar.jsx
+│       │
+│       ├── modules/
+│       │   ├── ModuleGroup.jsx
+│       │   ├── ModuleLunchMain.jsx
+│       │   ├── ModuleProfile.jsx
+│       │   └── ModuleSimple.jsx
+│       │
+│       ├── modules/group/
+│       │   ├── GroupCandidates.jsx
+│       │   ├── GroupCreateForm.jsx
+│       │   ├── GroupCreateSuccess.jsx
+│       │   ├── GroupDetail.jsx
+│       │   ├── GroupJoin.jsx
+│       │   └── GroupOverview.jsx
+│       │
+│       ├── pages/
+│       │   ├── AuthPage.css
+│       │   ├── AuthPage.jsx
+│       │   └── HomePage.jsx
+│       │
+│       ├── styles/
+│       │   ├── Group.css
+│       │   ├── App.jsx
+│       │   ├── authClient.js
+│       │   ├── index.css
+│       │   ├── LunchPicker.jsx
+│       │   └── main.jsx
+│       │
+│       ├── .gitignore
+│       ├── eslint.config.js
+│       ├── index.html
+│       ├── package-lock.json
+│       └── package.json
+│
+├── README.md
+└── vite.config.js
+```
