@@ -83,7 +83,7 @@ export async function addCandidate(groupId, name, address = "") {
 }
 
 
-// ==========  新增：投票 / 取消投票 ==========
+// ========== 🔥 新增：投票 / 取消投票 ==========
 export async function updateVote(groupId, candidateId) {
   const data = await request(`/api/groups/${groupId}/vote`, {
     method: "POST",
@@ -92,7 +92,7 @@ export async function updateVote(groupId, candidateId) {
   return data.group;
 }
 
-// ==========  新增：團長關閉投票 ==========
+// ========== 🔥 新增：團長關閉投票 ==========
 export async function closeVote(groupId) {
   const data = await request(`/api/groups/${groupId}/vote_close`, {
     method: "POST",

@@ -30,10 +30,11 @@ export default function GroupCandidates({
     }
     setLoading(true);
     try {
-      const updated = await addCandidate(groupId, {
-        name: name.trim(),
-        address: address.trim() || null,
-      });
+      const updated = await addCandidate(
+        groupId,
+        name.trim(),
+        address.trim() || ""
+      );
       onGroupUpdated(updated);
       setName("");
       setAddress("");

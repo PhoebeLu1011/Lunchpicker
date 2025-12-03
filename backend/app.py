@@ -1,4 +1,6 @@
 # app.py
+# app.py 開頭
+
 import os
 import datetime
 from functools import wraps
@@ -13,7 +15,18 @@ import random
 import string
 
 app = Flask(__name__)
-CORS(app)  # 之後需要可以再加 origins 設定
+
+# ✅ CORS 設定
+CORS(
+    app,
+    resources={r"/api/*": {"origins": [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]}},
+    supports_credentials=False,  # 我們用 Authorization header，不用 cookie
+    allow_headers=["Content-Type", "Authorization"],
+    expose_headers=["Content-Type", "Authorization"],
+)
 
 # ====== 環境變數 ======
 MONGO_URI = os.getenv("MONGO_URI")  # Atlas 連線字串

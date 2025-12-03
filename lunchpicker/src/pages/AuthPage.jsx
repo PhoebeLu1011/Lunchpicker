@@ -41,8 +41,8 @@ export default function AuthPage({ onLogin }) {
   return (
     <div className="auth-page bg-light min-vh-100 d-flex justify-content-center align-items-center">
       <div className="auth-card-wrapper col-11 col-sm-8 col-md-5 col-lg-4">
-        {/* 👇 跑步吃飯動畫放在卡片上方 */}
-        <LunchRunner />
+        {/*  <LunchRunner />*/}
+        
 
         <div className="card auth-card p-4 shadow-sm">
           <h1 className="h4 text-center mb-3 fw-bold text-primary">
