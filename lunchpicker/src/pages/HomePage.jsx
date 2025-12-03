@@ -105,8 +105,8 @@ export default function HomePage({ user, onLogout }) {
 
         {/* 第二模組：E 人揪團 */}
         {active === "group" && (
-          <ModuleWrapper title="第二模組：E 人揪團">
-            <ModuleGroup />
+          <ModuleWrapper >
+            <ModuleGroup user={user} />
           </ModuleWrapper>
         )}
 
@@ -119,7 +119,7 @@ export default function HomePage({ user, onLogout }) {
 
         {/* 第四模組：自訂餐廳抽籤 */}
         {active === "simple" && (
-          <ModuleWrapper title="第四模組：自訂餐廳抽籤">
+          <ModuleWrapper >
             <ModuleSimple />
           </ModuleWrapper>
         )}
