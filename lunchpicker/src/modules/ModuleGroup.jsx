@@ -10,7 +10,7 @@ import {
   addCandidate,
   closeGroup,
   deleteGroupApi,
-  // 🆕 團長改成員狀態
+  // 團長改成員狀態
   updateMemberStatus,
 } from "../api/groupApi";
 import "../styles/Group.css";
@@ -28,6 +28,10 @@ const VIEW = {
   DETAIL: "detail",
   JOIN: "join",
 };
+
+// 在 localStorage 裡記住目前畫面 & 團隊
+const STORAGE_KEY_VIEW = "lp_group_view";
+const STORAGE_KEY_ACTIVE_ID = "lp_group_active_group_id";
 
 function copyToClipboard(text) {
   if (!text) return;
@@ -47,6 +51,30 @@ export default function ModuleGroup({ user }) {
   // 一進來抓我的團隊
   useEffect(() => {
     loadMyGroups();
+  }, []);
+
+  // 一進來看看以前是不是停在某個團隊的 DETAIL
+  useEffect(() => {
+    const lastView = localStorage.getItem(STORAGE_KEY_VIEW);
+    const lastGroupId = localStorage.getItem(STORAGE_KEY_ACTIVE_ID);
+
+    if (lastView === VIEW.DETAIL && lastGroupId) {
+      (async () => {
+        try {
+          setLoading(true);
+          const detail = await fetchGroupDetail(lastGroupId);
+          setActiveGroup(detail);
+          setView(VIEW.DETAIL);
+        } catch (err) {
+          console.error("恢復上次團隊失敗", err);
+          // 如果這團已經不存在，就把紀錄清掉
+          localStorage.removeItem(STORAGE_KEY_VIEW);
+          localStorage.removeItem(STORAGE_KEY_ACTIVE_ID);
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }
   }, []);
 
   async function loadMyGroups() {
@@ -142,6 +170,9 @@ export default function ModuleGroup({ user }) {
       await deleteGroupApi(activeGroup.id);
       setActiveGroup(null);
       setView(VIEW.OVERVIEW);
+      // 清掉記憶
+      localStorage.removeItem(STORAGE_KEY_VIEW);
+      localStorage.removeItem(STORAGE_KEY_ACTIVE_ID);
       await loadMyGroups();
     } catch (err) {
       alert(err.message || "刪除團隊失敗");
@@ -166,6 +197,9 @@ export default function ModuleGroup({ user }) {
       setActiveGroup(newGroup);
       setCreatedCode(newGroup.code);
       setView(VIEW.CREATED);
+
+      // 先記住 active id，等等按「進入團隊」再寫入 view
+      localStorage.setItem(STORAGE_KEY_ACTIVE_ID, newGroup.id);
     } catch (err) {
       console.error("建立團隊失敗", err);
       alert(err.message || "建立團隊失敗");
@@ -180,6 +214,9 @@ export default function ModuleGroup({ user }) {
       const detail = await fetchGroupDetail(groupSummary.id);
       setActiveGroup(detail);
       setView(VIEW.DETAIL);
+
+      localStorage.setItem(STORAGE_KEY_VIEW, VIEW.DETAIL);
+      localStorage.setItem(STORAGE_KEY_ACTIVE_ID, detail.id);
     } catch (err) {
       console.error("載入團隊失敗", err);
       alert(err.message || "載入團隊失敗");
@@ -205,6 +242,10 @@ export default function ModuleGroup({ user }) {
       setActiveGroup(group);
       setCreatedCode(null);
       setView(VIEW.DETAIL);
+
+      // 加入成功後也記錄起來
+      localStorage.setItem(STORAGE_KEY_VIEW, VIEW.DETAIL);
+      localStorage.setItem(STORAGE_KEY_ACTIVE_ID, group.id);
     } catch (err) {
       console.error("加入團隊失敗", err);
       alert(err.message || "加入團隊失敗");
@@ -217,6 +258,11 @@ export default function ModuleGroup({ user }) {
     setView(VIEW.OVERVIEW);
     setActiveGroup(null);
     setCreatedCode(null);
+
+    // 使用者主動返回 → 不要再自動打開那個團
+    localStorage.removeItem(STORAGE_KEY_VIEW);
+    localStorage.removeItem(STORAGE_KEY_ACTIVE_ID);
+
     await loadMyGroups();
   }
 
@@ -239,7 +285,13 @@ export default function ModuleGroup({ user }) {
         groupName={activeGroup.name}
         code={code}
         onCopyCode={() => copyToClipboard(code)}
-        onEnterGroup={() => setView(VIEW.DETAIL)}
+        onEnterGroup={() => {
+          setView(VIEW.DETAIL);
+          localStorage.setItem(STORAGE_KEY_VIEW, VIEW.DETAIL);
+          if (activeGroup?.id) {
+            localStorage.setItem(STORAGE_KEY_ACTIVE_ID, activeGroup.id);
+          }
+        }}
       />
     );
   }
@@ -248,24 +300,19 @@ export default function ModuleGroup({ user }) {
     // 目前登入使用者的 id（有些後端叫 id，有些叫 _id，都試一下）
     const currentUserId = String(user?.id || user?._id || "");
 
-
     const isLeader =
       !!currentUserId &&
-      (
-        String(activeGroup.ownerId) === String(currentUserId) ||
+      (String(activeGroup.ownerId) === String(currentUserId) ||
         (Array.isArray(activeGroup.members) &&
           activeGroup.members.some(
             (m) => String(m.userId) === String(currentUserId) && m.role === "leader"
-          ))
-      );
+          )));
 
-    //debug
+    // debug
     console.log("members = ", activeGroup.members);
     console.log("currentUserId =", currentUserId);
     console.log("isLeader =", isLeader);
     console.log("ownerId =", activeGroup.ownerId);
-
-
 
     return (
       <GroupDetail
@@ -278,7 +325,7 @@ export default function ModuleGroup({ user }) {
         onDeleteGroup={handleDeleteGroup}
         onGroupUpdated={setActiveGroup}
         isLeader={isLeader}
-        // 🆕 傳進去給 GroupDetail 用來判斷成員列
+        // 傳進去給 GroupDetail 用來判斷成員列
         currentUserId={currentUserId}
         onSetMemberStatus={handleSetMemberStatus}
       />
