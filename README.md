@@ -5,12 +5,16 @@ npm install
 npm install bootstrap
 ```
 ### Run（之後每次啟動只要輸入這個即可）
+#### Frontend :
 ```
 cd lunchpicker
 npm run dev
 ```
+#### Backend :
 ```
 cd backend
+.\venv\Scripts\activate
+pip install -r requirements.txt
 py app.py
 ```
 
