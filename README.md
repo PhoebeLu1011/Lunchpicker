@@ -6,8 +6,14 @@ npm install bootstrap
 ```
 ### Run（之後每次啟動只要輸入這個即可）
 ```
+cd lunchpicker
 npm run dev
 ```
+```
+cd backend
+py app.py
+```
+
 ## | How to clone/pull/push
 ### 1. Clone repo.
 ```
