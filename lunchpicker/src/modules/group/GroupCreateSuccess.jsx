@@ -24,11 +24,10 @@ export default function GroupCreateSuccess({
             className="icon-btn"
             onClick={onCopyCode}
           >
-            📋
+            copy
           </button>
         </div>
-
-        <button className="primary-btn enter-btn" onClick={onEnterGroup}>
+        <button className="primary-btn enter-btn-new" onClick={onEnterGroup}>
           進入團隊
         </button>
       </div>

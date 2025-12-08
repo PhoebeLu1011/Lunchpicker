@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { login, register } from "../authClient";
 import LunchRunner from "../components/LunchRunner";
-import "./AuthPage.css"; // 等一下加一些小樣式
+import "./AuthPage.css";
 
 export default function AuthPage({ onLogin }) {
   const [mode, setMode] = useState("login");
@@ -39,22 +39,30 @@ export default function AuthPage({ onLogin }) {
   }
 
   return (
-    <div className="auth-page bg-light min-vh-100 d-flex justify-content-center align-items-center">
-      <div className="auth-card-wrapper col-11 col-sm-8 col-md-5 col-lg-4">
-        {/*  <LunchRunner />*/}
-        
+    <div className="auth-page">
+      <div className="auth-card-wrapper">
+        {/* 如果之後想放小動畫可以把這行打開 */}
+        {/* <LunchRunner /> */}
 
-        <div className="card auth-card p-4 shadow-sm">
-          <h1 className="h4 text-center mb-3 fw-bold text-primary">
-            LunchPicker
-          </h1>
+        <div className="auth-card">
+          {/* Logo + 副標題 */}
+          <div className="auth-header">
+            <div className="auth-logo-circle">🍱</div>
+            <div>
+              <h1 className="auth-title">LunchPicker</h1>
+              <p className="auth-subtitle">欸!所以今天午餐要吃什麼?</p>
+            </div>
+          </div>
 
-          <div className="btn-group w-100 mb-3">
+          {/* Login / Register 切換膠囊 */}
+          <div className="auth-toggle-group">
             <button
               type="button"
               className={
-                "btn w-50 auth-toggle-btn " +
-                (mode === "login" ? "btn-primary" : "btn-outline-primary")
+                "auth-toggle-btn " +
+                (mode === "login"
+                  ? "auth-toggle-active"
+                  : "auth-toggle-inactive")
               }
               onClick={() => {
                 setMode("login");
@@ -66,8 +74,10 @@ export default function AuthPage({ onLogin }) {
             <button
               type="button"
               className={
-                "btn w-50 auth-toggle-btn " +
-                (mode === "register" ? "btn-primary" : "btn-outline-primary")
+                "auth-toggle-btn " +
+                (mode === "register"
+                  ? "auth-toggle-active"
+                  : "auth-toggle-inactive")
               }
               onClick={() => {
                 setMode("register");
@@ -78,53 +88,78 @@ export default function AuthPage({ onLogin }) {
             </button>
           </div>
 
+          {/* 表單區 */}
           {mode === "login" ? (
             <form onSubmit={handleLogin}>
-              <label className="form-label w-100">
-                Email
+              <div className="auth-field">
+                <label className="auth-label" htmlFor="email">
+                  Email
+                </label>
                 <input
+                  id="email"
                   name="email"
                   type="email"
-                  className="form-control mt-1"
+                  className="auth-input"
                   required
                 />
-              </label>
-              <label className="form-label w-100 mt-3">
-                密碼
+              </div>
+
+              <div className="auth-field">
+                <label className="auth-label" htmlFor="password">
+                  密碼
+                </label>
                 <input
+                  id="password"
                   name="password"
                   type="password"
-                  className="form-control mt-1"
+                  className="auth-input"
                   required
                 />
-              </label>
-              <button className="btn btn-primary w-100 mt-3">登入</button>
+              </div>
+
+              <button className="auth-primary-btn" type="submit">
+                登入
+              </button>
             </form>
           ) : (
             <form onSubmit={handleRegister}>
-              <label className="form-label w-100">
-                Email
+              <div className="auth-field">
+                <label className="auth-label" htmlFor="reg-email">
+                  Email
+                </label>
                 <input
+                  id="reg-email"
                   name="email"
                   type="email"
-                  className="form-control mt-1"
+                  className="auth-input"
                   required
                 />
-              </label>
-              <label className="form-label w-100 mt-3">
-                密碼
+              </div>
+
+              <div className="auth-field">
+                <label className="auth-label" htmlFor="reg-password">
+                  密碼
+                </label>
                 <input
+                  id="reg-password"
                   name="password"
                   type="password"
-                  className="form-control mt-1"
+                  className="auth-input"
                   required
                 />
-              </label>
-              <button className="btn btn-primary w-100 mt-3">註冊</button>
+              </div>
+
+              <button className="auth-primary-btn" type="submit">
+                註冊
+              </button>
             </form>
           )}
 
-          {msg && <p className="small mt-3 mb-0 text-danger">{msg}</p>}
+          {msg && <p className="auth-message">{msg}</p>}
+
+          <p className="auth-footer-hint">
+            登入後你就知道午餐要吃什麼了...
+          </p>
         </div>
       </div>
     </div>
