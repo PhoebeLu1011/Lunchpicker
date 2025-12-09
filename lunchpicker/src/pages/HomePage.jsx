@@ -59,7 +59,6 @@ export default function HomePage({ user, onLogout }) {
 
             <section className="home-playlists">
               <header className="playlists-header">
-                <span className="playlists-title">功能播放清單</span>
                 <span className="playlists-hint">Swipe →</span>
               </header>
 
