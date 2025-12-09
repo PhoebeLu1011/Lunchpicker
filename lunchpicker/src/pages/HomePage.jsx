@@ -83,7 +83,6 @@ export default function HomePage({ user, onLogout }) {
                   </div>
 
                   <div className="playlist-footer">
-                    <span className="playlist-icon-circle">🍱</span>
                     <span className="playlist-cta">開始抽籤</span>
                   </div>
                 </button>
@@ -108,7 +107,6 @@ export default function HomePage({ user, onLogout }) {
                   </div>
 
                   <div className="playlist-footer">
-                    <span className="playlist-icon-circle">👥</span>
                     <span className="playlist-cta">管理我的團</span>
                   </div>
                 </button>
@@ -133,7 +131,6 @@ export default function HomePage({ user, onLogout }) {
                   </div>
 
                   <div className="playlist-footer">
-                    <span className="playlist-icon-circle">🚫</span>
                     <span className="playlist-cta">編輯黑名單</span>
                   </div>
                 </button>
@@ -158,7 +155,6 @@ export default function HomePage({ user, onLogout }) {
                   </div>
 
                   <div className="playlist-footer">
-                    <span className="playlist-icon-circle">📝</span>
                     <span className="playlist-cta">管理清單</span>
                   </div>
                 </button>
@@ -183,7 +179,7 @@ export default function HomePage({ user, onLogout }) {
 
         {/* 第三模組：黑名單 */}
         {active === "blacklist" && (
-          <ModuleWrapper title="第三模組：黑名單">
+          <ModuleWrapper>
             <ModuleBlacklist />
           </ModuleWrapper>
         )}
