@@ -6,7 +6,7 @@ import ModuleGroup from "../modules/ModuleGroup";
 import ModuleBlacklist from "../modules/ModuleBlacklist";
 import ModuleSimple from "../modules/ModuleSimple";
 import ModuleProfile from "../modules/ModuleProfile";
-
+import "../styles/Homepage.css";
 const STORAGE_KEY = "lunchpicker_active_tab";
 
 export default function HomePage({ user, onLogout }) {
@@ -49,50 +49,122 @@ export default function HomePage({ user, onLogout }) {
       <main className="home-hero">
         {/* 首頁：主選單 */}
         {active === "home" && (
-          <div className="container py-4">
-            <h3 className="mb-1">哈囉，{user.name || user.email} 👋</h3>
-            <p className="text-muted small">今天想吃什麼呢？</p>
-            <div className="row g-3 mt-3">
-              <div className="col-12 col-md-6">
+          <div className="home-shell">
+            <section className="home-greeting">
+              <h3 className="home-title">
+                哈囉，{user.name || user.email} 
+              </h3>
+              <p className="home-subtitle">今天想吃什麼呢？左右滑動選一個功能吧。</p>
+            </section>
+
+            <section className="home-playlists">
+              <header className="playlists-header">
+                <span className="playlists-title">功能播放清單</span>
+                <span className="playlists-hint">Swipe →</span>
+              </header>
+
+              <div className="playlists-track">
+                {/* 1. 智慧抽籤器 */}
                 <button
-                  className="module-card w-100 text-start"
+                  type="button"
+                  className="playlist-card pc1"
                   onClick={() => setActive("lunch")}
                 >
-                  <h6>Lunchpiker 抽籤器</h6>
-                  <p className="module-subtitle">輸入地點、智慧篩選餐廳</p>
-                </button>
-              </div>
+                  <div className="playlist-top-row">
+                    <span className="playlist-tag">推薦</span>
+                    <span className="playlist-dot">•••</span>
+                  </div>
 
-              <div className="col-12 col-md-6">
+                  <div className="playlist-main">
+                    <div className="playlist-thumb thumb1" />
+                    <div className="playlist-text">
+                      <h4>Lunchpicker 抽籤器</h4>
+                      <p>輸入地點，自動幫你選附近餐廳</p>
+                    </div>
+                  </div>
+
+                  <div className="playlist-footer">
+                    <span className="playlist-icon-circle">🍱</span>
+                    <span className="playlist-cta">開始抽籤</span>
+                  </div>
+                </button>
+
+                {/* 2. E 人揪團 */}
                 <button
-                  className="module-card w-100 text-start"
+                  type="button"
+                  className="playlist-card pc2"
                   onClick={() => setActive("group")}
                 >
-                  <h6>E 人揪團</h6>
-                  <p className="module-subtitle">建立或加入團隊</p>
-                </button>
-              </div>
+                  <div className="playlist-top-row">
+                    <span className="playlist-tag">一起吃飯</span>
+                    <span className="playlist-dot">•••</span>
+                  </div>
 
-              <div className="col-12 col-md-6">
+                  <div className="playlist-main">
+                    <div className="playlist-thumb thumb2" />
+                    <div className="playlist-text">
+                      <h4>E 人揪團</h4>
+                      <p>建立或加入團隊，大家一起投票決定午餐</p>
+                    </div>
+                  </div>
+
+                  <div className="playlist-footer">
+                    <span className="playlist-icon-circle">👥</span>
+                    <span className="playlist-cta">管理我的團</span>
+                  </div>
+                </button>
+
+                {/* 3. 黑名單管理 */}
                 <button
-                  className="module-card w-100 text-start"
+                  type="button"
+                  className="playlist-card pc3"
                   onClick={() => setActive("blacklist")}
                 >
-                  <h6>黑名單管理</h6>
-                  <p className="module-subtitle">排除不想顯示的餐廳</p>
-                </button>
-              </div>
+                  <div className="playlist-top-row">
+                    <span className="playlist-tag">不要再看到</span>
+                    <span className="playlist-dot">•••</span>
+                  </div>
 
-              <div className="col-12 col-md-6">
+                  <div className="playlist-main">
+                    <div className="playlist-thumb thumb3" />
+                    <div className="playlist-text">
+                      <h4>黑名單管理</h4>
+                      <p>排除踩雷或吃膩的餐廳，下次抽籤直接略過</p>
+                    </div>
+                  </div>
+
+                  <div className="playlist-footer">
+                    <span className="playlist-icon-circle">🚫</span>
+                    <span className="playlist-cta">編輯黑名單</span>
+                  </div>
+                </button>
+
+                {/* 4. 自訂餐廳抽籤 */}
                 <button
-                  className="module-card w-100 text-start"
+                  type="button"
+                  className="playlist-card pc4"
                   onClick={() => setActive("simple")}
                 >
-                  <h6>自訂餐廳抽籤</h6>
-                  <p className="module-subtitle">自訂清單抽籤</p>
+                  <div className="playlist-top-row">
+                    <span className="playlist-tag">客製清單</span>
+                    <span className="playlist-dot">•••</span>
+                  </div>
+
+                  <div className="playlist-main">
+                    <div className="playlist-thumb thumb4" />
+                    <div className="playlist-text">
+                      <h4>自訂餐廳抽籤</h4>
+                      <p>把愛店收進清單，隨機幫你選今天要吃哪一間</p>
+                    </div>
+                  </div>
+
+                  <div className="playlist-footer">
+                    <span className="playlist-icon-circle">📝</span>
+                    <span className="playlist-cta">管理清單</span>
+                  </div>
                 </button>
               </div>
-            </div>
+            </section>
           </div>
         )}
 

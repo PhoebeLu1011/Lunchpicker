@@ -1,191 +1,419 @@
 // src/modules/ModuleBlacklist.jsx
-import { useState, useEffect } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import Layout from "../components/Spin.jsx";
+import { geocodeAddress } from "../api/locationApi";
+import "../styles/ModuleBlacklist.css";
 
-// 讀取黑名單
-function loadBlacklistKeywords() {
-  try {
-    const raw = localStorage.getItem("lunchpicker_blacklist");
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
-    console.error("讀取黑名單失敗", e);
-    return [];
-  }
-}
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 export default function ModuleBlacklist() {
-  // 黑名單關鍵字列表
-  const [keywords, setKeywords] = useState([]);
+  const [address, setAddress] = useState("");
+  const [radius, setRadius] = useState(600); // meters
 
-  // 一開始載入 localStorage
-  useEffect(() => {
-    setKeywords(loadBlacklistKeywords());
-  }, []);
+  const [searchResults, setSearchResults] = useState([]);
+  const [blacklists, setBlacklists] = useState([]);
 
-  // 存入 localStorage
-  const saveToStorage = (next) => {
-    setKeywords(next);
+  const [loadingSearch, setLoadingSearch] = useState(false);
+  const [loadingList, setLoadingList] = useState(false);
+  const [error, setError] = useState("");
+
+  const [filterMode, setFilterMode] = useState("name"); // "name" 或 "address"
+  const [filterText, setFilterText] = useState("");
+
+  const blacklistRef = useRef(null);
+  // -----------------------------
+  // 讀取自己的黑名單
+  // -----------------------------
+  const fetchMyBlacklists = async () => {
+    setLoadingList(true);
+    setError("");
+
     try {
-      localStorage.setItem("lunchpicker_blacklist", JSON.stringify(next));
-    } catch (e) {
-      console.error("儲存黑名單失敗", e);
+      const resp = await fetch(`${API_BASE}/api/blacklists/my`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const data = await resp.json();
+
+      if (!resp.ok || !data.ok) {
+        throw new Error(data.error || "Failed to load blacklist.");
+      }
+
+      setBlacklists(data.items || []);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Failed to load blacklist.");
+    } finally {
+      setLoadingList(false);
     }
   };
 
-  // 新增
-  const handleAddClick = () => {
-    const input = window.prompt("請輸入要加入黑名單的關鍵字（例如：火鍋、燒烤）");
-    if (!input) return;
-    const keyword = input.trim();
-    if (!keyword) return;
+  useEffect(() => {
+    fetchMyBlacklists();
+  }, []);
 
-    if (keywords.includes(keyword)) {
-      alert("這個關鍵字已存在！");
+  // -----------------------------
+  // 用地址搜尋附近餐廳（後端會打 Overpass）
+  // -----------------------------
+  const handleSearch = async (e) => {
+    e.preventDefault();
+
+    if (!address) {
+      setError("請先輸入地址再搜尋");
       return;
     }
 
-    saveToStorage([keyword, ...keywords]);
+    setLoadingSearch(true);
+    setError("");
+
+    try {
+      // 1) geocode 地址 -> lat/lon
+      const loc = await geocodeAddress(address);
+      const { lat, lon } = loc;
+
+      // 2) 呼叫 lunch 搜尋 API（後端會再去打 Overpass）
+      const url = new URL(`${API_BASE}/api/lunch/search`);
+      url.searchParams.set("lat", lat);
+      url.searchParams.set("lon", lon);
+      url.searchParams.set("radius", radius);
+      url.searchParams.set("cuisine", "ALL");
+
+      const resp = await fetch(url.toString(), {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const data = await resp.json();
+      if (!resp.ok || !data.ok) {
+        throw new Error(data.error || "Search failed.");
+      }
+
+      setSearchResults(data.restaurants || []);
+      if ((data.restaurants || []).length === 0) {
+        setError("附近找不到餐廳，試試看加大搜尋半徑。");
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Search failed.");
+    } finally {
+      setLoadingSearch(false);
+    }
   };
 
-  // 刪除
-  const handleDelete = (keyword) => {
-    if (!window.confirm(`確定要刪除「${keyword}」嗎？`)) return;
-    saveToStorage(keywords.filter((k) => k !== keyword));
+  // -----------------------------
+  // 新增到黑名單
+  // -----------------------------
+  const handleAddBlacklist = async (r) => {
+    setError("");
+
+    try {
+      const resp = await fetch(`${API_BASE}/api/blacklists`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          osmId: r.osmId,
+          osmType: r.osmType,
+          name: r.name,
+          address: r.address,
+          lat: r.lat,
+          lon: r.lon,
+        }),
+      });
+
+      const data = await resp.json();
+      if (!resp.ok || !data.ok) {
+        throw new Error(data.error || "加入黑名單失敗");
+      }
+
+      const item = data.item;
+
+      // 加入 / 更新到本地 blacklists 狀態
+      setBlacklists((prev) => {
+        const others = prev.filter((b) => b.id !== item.id);
+        return [item, ...others];
+      });
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "加入黑名單失敗");
+    }
   };
 
-  // UI style
-  const styles = {
-    page: {
-      backgroundColor: "#fff6ee",
-      borderRadius: "24px",
-      padding: "24px 32px",
-      minHeight: "100vh",
-    },
-    introCard: {
-      display: "flex",
-      gap: "16px",
-      backgroundColor: "#ffe3d6",
-      borderRadius: "24px",
-      padding: "20px 24px",
-      marginBottom: "24px",
-    },
-    introIcon: {
-      width: "40px",
-      height: "40px",
-      borderRadius: "999px",
-      border: "2px solid #ff8a3c",
-      color: "#ff8a3c",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: "20px",
-      backgroundColor: "#fff",
-      flexShrink: 0,
-    },
-    introTitle: {
-      fontSize: "20px",
-      fontWeight: "700",
-      margin: 0,
-    },
-    main: {
-      display: "flex",
-      gap: "24px",
-    },
-    addBtn: {
-      width: "160px",
-      height: "96px",
-      borderRadius: "24px",
-      backgroundColor: "#ff8a00",
-      color: "#fff",
-      fontSize: "16px",
-      fontWeight: "600",
-      border: "none",
-      cursor: "pointer",
-      boxShadow: "0 8px 16px rgba(255,138,0,0.3)",
-    },
-    addPlus: { fontSize: "24px", marginBottom: "4px" },
-    emptyCard: {
-      flex: 1,
-      minHeight: "220px",
-      backgroundColor: "#fff",
-      borderRadius: "32px",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "24px",
-    },
-    chipRow: {
-      display: "flex",
-      flexWrap: "wrap",
-      gap: "10px",
-      marginTop: "16px",
-      justifyContent: "center",
-    },
-    chip: {
-      backgroundColor: "#ffeede",
-      padding: "6px 12px",
-      borderRadius: "999px",
-      display: "flex",
-      alignItems: "center",
-      gap: "6px",
-      color: "#8a5a3c",
-    },
-    delBtn: {
-      border: "none",
-      background: "transparent",
-      cursor: "pointer",
-      color: "#c08060",
-    },
+  // -----------------------------
+  // 從黑名單移除
+  // -----------------------------
+  const handleRemoveBlacklist = async (id) => {
+    setError("");
+
+    try {
+      const resp = await fetch(`${API_BASE}/api/blacklists/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      const data = await resp.json();
+      if (!resp.ok || !data.ok) {
+        throw new Error(data.error || "移除黑名單失敗");
+      }
+
+      setBlacklists((prev) => prev.filter((b) => b.id !== id));
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "移除黑名單失敗");
+    }
   };
+
+  // 判斷搜尋結果是否已在黑名單中
+  const isInBlacklist = (r) => {
+    return blacklists.some(
+      (b) =>
+        b.osmType === r.osmType &&
+        Number(b.osmId) === Number(r.osmId)
+    );
+  };
+
+  // 簡單格式化日期
+  const formatDate = (iso) => {
+    if (!iso) return "";
+    try {
+      const d = new Date(iso);
+      return d.toLocaleString();
+    } catch {
+      return iso;
+    }
+  };
+
+
+  const filteredBlacklists = blacklists.filter((b) => {
+    if (!filterText.trim()) return true; // 沒輸入就全部顯示
+
+    const keyword = filterText.trim().toLowerCase();
+
+    if (filterMode === "address") {
+      return (b.address || "").toLowerCase().includes(keyword);
+    } else {
+      // 預設用名稱
+      return (b.name || "").toLowerCase().includes(keyword);
+    }
+  });
+
 
   return (
-    <div style={styles.page}>
-      <section style={styles.introCard}>
-        <div style={styles.introIcon}>✕</div>
-        <div>
-          <h2 style={styles.introTitle}>黑名單說明</h2>
-          <p>加入黑名單的關鍵字，抽籤時不會出現。</p>
-        </div>
-      </section>
+    <Layout title="Blacklist">
+      <div className="blacklist-page">
+        {/* 搜尋 & 新增 黑名單區塊 */}
+        <section className="blacklist-section">
+          <h2 className="blacklist-section-title">搜尋餐廳並加入黑名單</h2>
+          {/* 一鍵跳到黑名單 */}
+          <button
+            type="button"
+            className="blacklist-jump-btn"
+            onClick={() =>
+              blacklistRef.current?.scrollIntoView({ behavior: "smooth" })
+            }
+          >
+             ↓ 跳轉至"我的黑名單"
+          </button>
+          <form onSubmit={handleSearch} className="blacklist-search-form">
+            <div className="blacklist-form-row">
+              <label className="blacklist-label">地址</label>
+              <input
+                type="text"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="輸入地址，例如：台北市 大安區 師大路..."
+                className="blacklist-input"
+              />
+            </div>
 
-      <section style={styles.main}>
-        <button style={styles.addBtn} onClick={handleAddClick}>
-          <span style={styles.addPlus}>＋</span>
-          新增黑名單
-        </button>
+            <div className="blacklist-form-row">
+              <label className="blacklist-label">搜尋半徑</label>
+              <select
+                value={radius}
+                onChange={(e) => setRadius(Number(e.target.value))}
+                className="blacklist-select"
+              >
+                <option value={500}>500 m</option>
+                <option value={600}>600 m</option>
+                <option value={1000}>1 km</option>
+                <option value={2000}>2 km</option>
+              </select>
+            </div>
 
-        <div style={styles.emptyCard}>
-          {keywords.length === 0 ? (
-            <>
-              <p style={{ fontSize: "18px", fontWeight: "600" }}>
-                黑名單是空的
-              </p>
-              <p style={{ color: "#999" }}>新增不想看到的餐廳或關鍵字</p>
-            </>
-          ) : (
-            <>
-              <p style={{ fontSize: "18px", fontWeight: "600" }}>
-                目前黑名單
-              </p>
+            <button
+              type="submit"
+              className="blacklist-search-button"
+              disabled={loadingSearch}
+            >
+              {loadingSearch ? "搜尋中..." : "搜尋附近餐廳"}
+            </button>
+          </form>
 
-              <div style={styles.chipRow}>
-                {keywords.map((k) => (
-                  <span key={k} style={styles.chip}>
-                    {k}
+          {/* 搜尋結果 */}
+          <div className="blacklist-results">
+            {searchResults.map((r) => (
+              <div
+                key={`${r.osmType}:${r.osmId}`}
+                className="blacklist-restaurant-card"
+              >
+                <div className="blacklist-restaurant-main">
+                  <h3 className="blacklist-restaurant-name">
+                    {r.name || "未命名餐廳"}
+                  </h3>
+
+                  {/* cuisine badge（跟 LunchMain 一樣） */}
+                  {r.cuisine && (
+                    <div className="restaurant-cuisine-badges">
+                      {r.cuisine
+                        .split(/;|,/)
+                        .map((tag) => tag.trim())
+                        .filter((tag) => tag.length > 0)
+                        .map((tag) => (
+                          <span
+                            key={tag}
+                            className={`cuisine-badge cuisine-${tag
+                              .toLowerCase()
+                              .replace(/\s+/g, "_")}`}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                    </div>
+                  )}
+
+                  <div className="blacklist-restaurant-meta">
+                    {Math.round(r.distance)} m
+                  </div>
+                  <p className="blacklist-restaurant-address">{r.address}</p>
+                </div>
+
+                <div className="blacklist-restaurant-actions">
+                  {isInBlacklist(r) ? (
                     <button
-                      style={styles.delBtn}
-                      onClick={() => handleDelete(k)}
+                      type="button"
+                      className="btn-chip btn-chip--unblock"
+                      disabled
                     >
-                      ✕
+                      ✔ 已在黑名單
                     </button>
-                  </span>
-                ))}
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn-chip btn-chip--block"
+                      onClick={() => handleAddBlacklist(r)}
+                    >
+                      🚫 加入黑名單
+                    </button>
+                  )}
+                </div>
               </div>
-            </>
+            ))}
+          </div>
+        </section>
+
+        {/* 分隔線 */}
+        <hr className="blacklist-divider" />
+
+        {/* 我的黑名單列表 */}
+        <section className="blacklist-section">
+          <h2 className="blacklist-section-title" ref={blacklistRef}>
+            我的黑名單
+          </h2>
+
+          {/* 🔍 黑名單搜尋模式切換 */}
+          <div className="blacklist-filter-bar">
+            <div className="blacklist-filter-toggle">
+              <button
+                type="button"
+                className={
+                  filterMode === "name"
+                    ? "blacklist-filter-btn blacklist-filter-btn--active"
+                    : "blacklist-filter-btn"
+                }
+                onClick={() => setFilterMode("name")}
+              >
+                依餐廳名稱搜尋
+              </button>
+              <button
+                type="button"
+                className={
+                  filterMode === "address"
+                    ? "blacklist-filter-btn blacklist-filter-btn--active"
+                    : "blacklist-filter-btn"
+                }
+                onClick={() => setFilterMode("address")}
+              >
+                依地址搜尋
+              </button>
+            </div>
+
+            <input
+              type="text"
+              className="blacklist-filter-input"
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+              placeholder={
+                filterMode === "name"
+                  ? "輸入餐廳名稱關鍵字..."
+                  : "輸入地址關鍵字..."
+              }
+            />
+          </div>
+
+          {loadingList && (
+            <div className="blacklist-hint">讀取黑名單中...</div>
           )}
-        </div>
-      </section>
-    </div>
+
+          {!loadingList && filteredBlacklists.length === 0 && (
+            <div className="blacklist-hint">
+              找不到符合條件的黑名單項目。
+            </div>
+          )}
+
+          <div className="blacklist-list">
+            {filteredBlacklists.map((b) => (
+              <div key={b.id} className="blacklist-item-card">
+                <div className="blacklist-item-main">
+                  <div className="blacklist-item-name">
+                    {b.name || "未命名餐廳"}
+                  </div>
+                  <div className="blacklist-item-address">
+                    {b.address}
+                  </div>
+                  <div className="blacklist-item-meta">
+                    加入時間：{formatDate(b.createdAt)}
+                  </div>
+                </div>
+
+                <div className="blacklist-item-actions">
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                      (b.name || "") + " " + (b.address || "")
+                    )}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="blacklist-map-link"
+                  >
+                    查看地圖
+                  </a>
+
+                  <button
+                    type="button"
+                    className="btn-chip btn-chip--unblock"
+                    onClick={() => handleRemoveBlacklist(b.id)}
+                  >
+                    移除
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+
+        {error && <div className="blacklist-error">{error}</div>}
+      </div>
+    </Layout>
   );
 }

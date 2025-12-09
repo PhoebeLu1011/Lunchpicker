@@ -14,6 +14,7 @@
   margin-bottom: 20px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.05);
   border: 1px solid #e8e8e8;
+  animation: group-fade-up 0.25s ease-out;
 }
 
 /* ===== 上面兩個大按鈕（建立 / 加入） ===== */
@@ -34,11 +35,11 @@
 }
 
 .create-card {
-  background: #C2DCD3;
+  background: #f6ede4;
 }
 
 .join-card {
-  background: #EAF4EF;
+  background: #f8f3ec;
 }
 
 .action-card:hover {
@@ -89,6 +90,7 @@
   text-align: left;
   border: none;
   background: #fff;
+  animation: group-fade-up 0.25s ease-out;
 }
 
 .my-group-header {
@@ -105,7 +107,7 @@
 
 .my-group-badge {
   font-size: 13px;
-  background: #C2DCD3;
+  background: #f3d8c6;
   padding: 4px 10px;
   border-radius: 12px;
   font-weight: 600;
@@ -121,14 +123,14 @@
   width: 100%;
   padding: 14px 16px;
   border-radius: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid #e8cfbf;
   margin-bottom: 16px;
   font-size: 16px;
 }
 
 /* ===== 主按鈕 ===== */
 .primary-btn {
-  background: #6FAF9A;
+  background: linear-gradient(135deg, #f6c6a8, #efa985);
   color: white;
   padding: 12px 18px;
   border: none;
@@ -140,7 +142,7 @@
 }
 
 .primary-btn:hover {
-  background: #5a9d89;
+  background: linear-gradient(135deg, #f2b793, #ec9f7a);
 }
 
 /* ===== 代碼區塊 ===== */
@@ -161,7 +163,7 @@
 
 /* ===== 小圖示按鈕 ===== */
 .icon-btn {
-  background: #dfe7e3;
+  background: #f6ede4;
   padding: 10px 14px;
   border-radius: 12px;
   border: none;
@@ -169,7 +171,7 @@
 }
 
 .icon-btn:hover {
-  background: #cbd9d3;
+  background: #f1e0d4;
 }
 
 /* ===== 成員列表 ===== */
@@ -202,7 +204,7 @@
 
 /* 參加 / 不參加按鈕 */
 .chip-btn {
-  background: #C2DCD3;
+  background: #f4dfd2;
   border: none;
   padding: 6px 14px;
   border-radius: 12px;
@@ -446,13 +448,13 @@
   height: 34px;
   border-radius: 50%;
   border: none;
-  background: #f2f2f2;
+  background: #f6ede4;
   cursor: pointer;
   font-size: 17px;
 }
 
 .candidate-vote-btn.voted {
-  background: #8fd7aa;
+  background: #efbfa0;
 }
 
 .candidate-vote-btn:disabled {
@@ -484,13 +486,40 @@
 
 .candidate-progress-inner {
   height: 100%;
-  background: #8fd7aa;
+  background: linear-gradient(90deg, #efbfa0 0%, #f4d3be 50%, #efbfa0 100%);
+  background-size: 200% 100%;
+  transition: width 0.35s ease, background-position 0.6s ease;
+  animation: candidate-fill 1.2s ease-out;
 }
 
 .candidate-percent {
   width: 40px;
   text-align: right;
   color: #666;
+}
+
+@keyframes group-fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes candidate-fill {
+  0% {
+    background-position: 0% 0%;
+    transform: scaleX(0.96);
+    opacity: 0.8;
+  }
+  100% {
+    background-position: 100% 0%;
+    transform: scaleX(1);
+    opacity: 1;
+  }
 }
 
 

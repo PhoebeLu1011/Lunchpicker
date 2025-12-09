@@ -1,35 +1,21 @@
 /* src/pages/AuthPage.css */
 
-/* 整頁背景：沿用首頁 app-shell 的奶茶漸層 */
 .auth-page {
+  position: relative;
+  isolation: isolate;
   min-height: 100vh;
   padding: 32px 16px;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 
-  background: radial-gradient(
-      circle at 20% 20%,
-      rgba(243, 234, 225, 0.8),
-      transparent 60%
-    ),
-    radial-gradient(
-      circle at 80% 60%,
-      rgba(240, 231, 223, 0.7),
-      transparent 60%
-    ),
-    radial-gradient(
-      circle at 50% 100%,
-      rgba(247, 239, 233, 0.8),
-      transparent 70%
-    ),
-    #f8f4ef;
 }
 
-/* 卡片外層：控制寬度 */
+
 .auth-card-wrapper {
   width: 100%;
-  max-width: 420px;
+  max-width: 620px; 
 }
 
 /* 內層白卡片 */
@@ -167,13 +153,28 @@
   line-height: 1.5;
 }
 
-/* 手機微調 */
-@media (max-width: 576px) {
+
+@media (min-width: 1024px) {
   .auth-card {
-    padding: 20px 16px 22px;
+    padding: 32px 32px 30px; /* 原本 24px，再多一圈 */
+    border-radius: 28px;
   }
 
   .auth-title {
-    font-size: 1.15rem;
+    font-size: 1.5rem;
+  }
+
+  .auth-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .auth-input {
+    font-size: 1rem;
+    padding: 11px 13px;
+  }
+
+  .auth-primary-btn {
+    padding: 11px 0;
+    font-size: 1rem;
   }
 }

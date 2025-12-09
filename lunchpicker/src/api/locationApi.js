@@ -1,31 +1,49 @@
-// src/api/locationApi.js
+// src/utils/location.js
 
 const NOMINATIM_BASE = "https://nominatim.openstreetmap.org/search";
 const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
 
-// 1) 地址 → 經緯度
+/**
+ * @typedef {Object} Coordinates
+ * @property {number} lat
+ * @property {number} lon
+ */
+
+/**
+ * @typedef {Object} Restaurant
+ * @property {number} id
+ * @property {string} osmId
+ * @property {string} name
+ * @property {number} lat
+ * @property {number} lon
+ * @property {string} cuisine
+ * @property {string} address
+ * @property {number} distance
+ */
+
+/**
+ * Convert an address to coordinates using Nominatim.
+ * @param {string} query
+ * @returns {Promise<Coordinates & { label: string }>}
+ */
 export async function geocodeAddress(query) {
   const url = new URL(NOMINATIM_BASE);
   url.search = new URLSearchParams({
     q: query,
     format: "json",
-    addressdetails: 1,
-    limit: 1,
-  });
+    addressdetails: "1",
+    limit: "1",
+  }).toString();
 
-  const res = await fetch(url.toString(), {
-    headers: {
-      // 瀏覽器不能改 User-Agent，就先這樣用，作業用通常 OK
-    },
-  });
+  const res = await fetch(url.toString());
 
   if (!res.ok) {
-    throw new Error("Nominatim 請求失敗");
+    throw new Error("Geocoding service unavailable.");
   }
 
   const data = await res.json();
   if (!data.length) {
-    throw new Error("找不到這個地址");
+    throw new Error("Address not found.");
   }
 
   const { lat, lon, display_name } = data[0];
@@ -36,16 +54,64 @@ export async function geocodeAddress(query) {
   };
 }
 
-// 2) 用 Overpass 找附近餐廳
-export async function fetchNearbyRestaurants(lat, lon, radiusKm = 2) {
-  const radiusMeters = radiusKm * 1000;
+/**
+ * Calculate distance between two points in meters (Haversine formula).
+ * @param {number} lat1
+ * @param {number} lon1
+ * @param {number} lat2
+ * @param {number} lon2
+ * @returns {number} distance in meters
+ */
+function getDistanceFromLatLonInM(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) *
+      Math.cos(deg2rad(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const d = R * c; // Distance in km
+  return d * 1000; // Meters
+}
 
+function deg2rad(deg) {
+  return deg * (Math.PI / 180);
+}
+
+/**
+ * Fetch restaurants from Overpass API.
+ * @param {number} lat
+ * @param {number} lon
+ * @param {number} radiusMeters
+ * @param {string} cuisine  // 例如: "sushi"；傳 "ALL" 或空字串代表不過濾
+ * @returns {Promise<Restaurant[]>}
+ */
+export async function fetchNearbyRestaurants(
+  lat,
+  lon,
+  radiusMeters,
+  cuisine = "ALL"
+) {
+  // Construct cuisine filter
+  let cuisineFilter = "";
+  if (cuisine && cuisine !== "ALL") {
+    // Overpass regex matching for partial matches (e.g. 'sushi' inside 'japanese;sushi')
+    cuisineFilter = `["cuisine"~"${cuisine}",i]`;
+  }
+
+  // Query: Search for nodes, ways, and relations tagged as restaurant or fast_food
   const query = `
     [out:json][timeout:25];
     (
-      node["amenity"="restaurant"](around:${radiusMeters},${lat},${lon});
-      way["amenity"="restaurant"](around:${radiusMeters},${lat},${lon});
-      relation["amenity"="restaurant"](around:${radiusMeters},${lat},${lon});
+      node["amenity"="restaurant"]${cuisineFilter}(around:${radiusMeters},${lat},${lon});
+      way["amenity"="restaurant"]${cuisineFilter}(around:${radiusMeters},${lat},${lon});
+      relation["amenity"="restaurant"]${cuisineFilter}(around:${radiusMeters},${lat},${lon});
+      node["amenity"="fast_food"]${cuisineFilter}(around:${radiusMeters},${lat},${lon});
+      way["amenity"="fast_food"]${cuisineFilter}(around:${radiusMeters},${lat},${lon});
+      relation["amenity"="fast_food"]${cuisineFilter}(around:${radiusMeters},${lat},${lon});
     );
     out center;
   `;
@@ -59,23 +125,39 @@ export async function fetchNearbyRestaurants(lat, lon, radiusKm = 2) {
   });
 
   if (!res.ok) {
-    throw new Error("Overpass 請求失敗");
+    throw new Error("Failed to fetch data from OpenStreetMap.");
   }
 
   const data = await res.json();
+  const elements = data.elements || [];
 
-  // 簡單整理一下結果
-  const list = (data.elements || []).map((el) => {
-    const center = el.center || { lat: el.lat, lon: el.lon };
-    return {
-      id: el.id,
-      name: el.tags?.name || "未命名餐廳",
-      lat: center?.lat,
-      lon: center?.lon,
-      cuisine: el.tags?.cuisine || "",
-      rawTags: el.tags || {},
-    };
-  });
+  const results = elements
+    .map((el) => {
+      // For ways/relations, Overpass 'out center' gives us a center lat/lon
+      const centerLat = el.lat || el.center?.lat || 0;
+      const centerLon = el.lon || el.center?.lon || 0;
 
-  return list;
+      const name = el.tags?.name || "Unnamed Restaurant";
+      const street = el.tags?.["addr:street"] || "";
+      const number = el.tags?.["addr:housenumber"] || "";
+      const address = street ? `${street} ${number}` : "Address not available";
+
+      return {
+        id: el.id,
+        osmId: `${el.type}/${el.id}`,
+        name,
+        lat: centerLat,
+        lon: centerLon,
+        cuisine: el.tags?.cuisine || "General",
+        address,
+        distance: getDistanceFromLatLonInM(lat, lon, centerLat, centerLon),
+      };
+    })
+    // Optional: Filter out unnamed places
+    .filter((r) => r.name !== "Unnamed Restaurant");
+
+  // Sort by distance
+  results.sort((a, b) => (a.distance || 0) - (b.distance || 0));
+
+  return results;
 }

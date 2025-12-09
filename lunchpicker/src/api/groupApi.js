@@ -1,21 +1,22 @@
 // src/api/groupApi.js
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5000";
 
-function getToken() {
-  return localStorage.getItem("lp_token"); // 依照你的 Auth 寫法
-}
+// src/api/groupApi.js
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
+
+/**
+ * 共用 request：全部改用「Cookie 驗證」，不再用 Authorization header
+ */
 async function request(path, options = {}) {
-  const token = getToken();
   const headers = {
     "Content-Type": "application/json",
     ...(options.headers || {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers,
+    credentials: "include", // ⭐ 一定要加，access_token cookie 才會跟著送
   });
 
   const data = await res.json().catch(() => ({}));
@@ -28,7 +29,7 @@ async function request(path, options = {}) {
   return data;
 }
 
-// ========== 既有 API ==========
+// ========== 團隊 API ==========
 
 export async function fetchMyGroups() {
   const data = await request("/api/groups/my");
@@ -56,6 +57,7 @@ export async function joinGroupByCode(code) {
   return data.group;
 }
 
+// 我自己的參加 / 不參加
 export async function updateParticipation(groupId, status) {
   const data = await request(`/api/groups/${groupId}/participation`, {
     method: "POST",
@@ -64,6 +66,7 @@ export async function updateParticipation(groupId, status) {
   return data.group;
 }
 
+// 公告
 export async function addAnnouncement(groupId, content) {
   const data = await request(`/api/groups/${groupId}/announcements`, {
     method: "POST",
@@ -72,8 +75,7 @@ export async function addAnnouncement(groupId, content) {
   return data.group;
 }
 
-// ==========  新增：候選餐廳 ==========
-// name 必填，address 先是選填（目前前端沒用到）
+// 候選餐廳
 export async function addCandidate(groupId, name, address = "") {
   const data = await request(`/api/groups/${groupId}/candidates`, {
     method: "POST",
@@ -82,17 +84,16 @@ export async function addCandidate(groupId, name, address = "") {
   return data.group;
 }
 
-
-// ========== 投票 / 取消投票 ==========
+// 投票 / 取消投票（candidateId 可以是 null）
 export async function updateVote(groupId, candidateId) {
   const data = await request(`/api/groups/${groupId}/vote`, {
     method: "POST",
-    body: JSON.stringify({ candidateId }), // candidateId 可為 null
+    body: JSON.stringify({ candidateId }),
   });
   return data.group;
 }
 
-// ========== 團長關閉投票 ==========
+// 團長關閉投票
 export async function closeVote(groupId) {
   const data = await request(`/api/groups/${groupId}/vote_close`, {
     method: "POST",
@@ -100,8 +101,7 @@ export async function closeVote(groupId) {
   return data.group;
 }
 
-// ========== 既有 API ==========
-
+// 團隊關閉
 export async function closeGroup(groupId) {
   const data = await request(`/api/groups/${groupId}/close`, {
     method: "POST",
@@ -109,12 +109,14 @@ export async function closeGroup(groupId) {
   return data.group;
 }
 
+// 團隊刪除
 export async function deleteGroupApi(groupId) {
   await request(`/api/groups/${groupId}`, {
     method: "DELETE",
   });
 }
 
+// 團長改成員狀態 (join / not_join)
 export async function updateMemberStatus(groupId, memberId, status) {
   const data = await request(`/api/groups/${groupId}/member_status`, {
     method: "POST",
@@ -122,4 +124,3 @@ export async function updateMemberStatus(groupId, memberId, status) {
   });
   return data.group;
 }
-

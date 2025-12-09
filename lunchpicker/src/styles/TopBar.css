@@ -1,0 +1,83 @@
+/* src/components/TopBar.css */
+
+.app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+
+  padding: 0.75rem 1rem;
+  background-color: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+  border-bottom: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+}
+
+/* 左上角 Logo */
+.app-topbar-logo {
+  font-weight: 700;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+/* 右邊 email */
+.app-topbar-email {
+  font-size: 0.8rem;
+  color: #6c757d;
+  cursor: pointer;
+}
+
+/* 漢堡按鈕 */
+.hamburger-btn {
+  border: none;
+  background: transparent;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* 側邊選單 */
+.side-menu {
+  position: fixed;
+  top: 56px;            /* 視你的 topbar 高度調整 */
+  right: 0;
+  width: 220px;
+
+  background-color: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(10px);
+  box-shadow: -2px 0 12px rgba(15, 23, 42, 0.18);
+
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  z-index: 60;
+}
+
+.side-item {
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 0.5rem 0.25rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.side-item:hover {
+  background-color: #f3f4f6;
+}
+
+/* 目前所在頁面 */
+.side-item.active {
+  background-color: #0ea5e9; 
+  color: #ffffff;
+}
+
+/* 登出 */
+.side-item.logout {
+  color: #ef4444;
+}
+
+.side-item.logout:hover {
+  background-color: #fee2e2;
+}

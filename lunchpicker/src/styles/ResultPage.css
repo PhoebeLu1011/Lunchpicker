@@ -1,0 +1,203 @@
+/* src/styles/ResultPage.css */
+
+.result-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 16px 48px;
+}
+
+/* 卡片 */
+.result-card {
+  width: 100%;
+  max-width: 420px;
+  background-color: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+/* 頂部漸層 */
+.result-header {
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #ffb78f, #5fb3ff);
+  color: #ffffff;
+  text-align: center;
+}
+
+.result-name {
+  margin: 0 0 6px;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.result-cuisine {
+  margin: 0 auto;
+  font-size: 0.85rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  display: inline-block;
+  background-color: rgba(255, 255, 255, 0.16);
+}
+
+/* 內容 */
+.result-body {
+  padding: 20px 24px 24px;
+}
+
+.result-section {
+  margin-bottom: 16px;
+}
+
+.section-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  margin-bottom: 4px;
+}
+
+.section-main {
+  font-size: 0.98rem;
+  color: #2f2520;
+  line-height: 1.5;
+}
+
+.section-sub {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: #7b6a63;
+}
+
+/* 座標 */
+.coords-box {
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  background-color: #fdf7f2;
+  padding: 8px 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 0.82rem;
+}
+
+.coords-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.coords-row:last-child {
+  margin-bottom: 0;
+}
+
+.coords-label {
+  color: #7b6a63;
+}
+
+.coords-value {
+  color: #2f2520;
+}
+
+/* 按鈕共用 */
+.result-btn {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease, transform 0.05s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.result-btn:active {
+  transform: scale(0.98);
+}
+
+/* 主色按鈕（Google Maps）*/
+.result-btn-primary {
+  width: 100%;
+  margin-top: 8px;
+  background: linear-gradient(135deg, #ffb78f, #f06f75);
+  color: #ffffff;
+  box-shadow: 0 12px 26px rgba(240, 111, 117, 0.3);
+}
+
+.result-btn-primary:hover {
+  background: linear-gradient(135deg, #f29b77, #e45d66);
+}
+
+/* 次要按鈕（回到搜尋） */
+.result-btn-secondary {
+  flex: 1;
+  background-color: #2f2520;
+  color: #ffffff;
+}
+
+.result-btn-secondary:hover {
+  background-color: #241c18;
+}
+
+/* 描邊按鈕（再抽一次） */
+.result-btn-outline {
+  flex: 1;
+  background-color: #ffffff;
+  color: #5b4b43;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.result-btn-outline:hover {
+  background-color: #fff2ea;
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+/* 黑名單按鈕 */
+.blacklist-btn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.blacklist-btn--blocked {
+  background-color: #e9f9ef;
+  border-color: #b9edc8;
+  color: #2f6a47;
+}
+
+.blacklist-btn--blocked:hover {
+  background-color: #d7f2e4;
+}
+
+.blacklist-btn--add {
+  background-color: #fff0ea;
+  border-color: #ffd1bd;
+  color: #aa4c2a;
+}
+
+.blacklist-btn--add:hover {
+  background-color: #ffd9c8;
+}
+
+/* 底部操作列 */
+.result-footer {
+  margin-top: 20px;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  gap: 12px;
+}
