@@ -1,0 +1,222 @@
+/* ==============================
+   Home greeting 區塊
+============================== */
+
+.home-shell {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 28px 16px 40px;
+}
+
+.home-greeting {
+  margin-bottom: 16px;
+}
+
+.home-title {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: #1f2933;
+}
+
+.home-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* ==============================
+   功能播放清單標題
+============================== */
+
+.home-playlists {
+  margin-top: 12px;
+}
+
+.playlists-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.playlists-title {
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.playlists-hint {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* ==============================
+   功能播放清單滑動 Track
+============================== */
+
+.playlists-track {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 4px 2px 14px;
+  scroll-snap-type: x mandatory;
+  scroll-snap-stop: always;
+  -webkit-overflow-scrolling: touch;
+}
+
+.playlists-track::-webkit-scrollbar {
+  height: 6px;
+}
+
+.playlists-track::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 999px;
+}
+
+/* ==============================
+   單張播放清單卡片
+   顯示一張，柔和奶茶系
+============================== */
+
+.playlist-card {
+  position: relative;
+  flex: 0 0 100%;
+  max-width: 560px;
+  min-height: 190px;
+
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 28px;
+  padding: 18px 20px 20px;
+
+  scroll-snap-align: center;
+  text-align: left;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  color: #2f2520;
+  cursor: pointer;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.08);
+
+  transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+}
+
+.pc1 {
+  background: linear-gradient(135deg, #fff1e6, #ffe7d8);
+}
+
+.pc2 {
+  background: linear-gradient(135deg, #e8f5f3, #d5e9e4);
+}
+
+.pc3 {
+  background: linear-gradient(135deg, #f8e8e8, #f4dede);
+}
+
+.pc4 {
+  background: linear-gradient(135deg, #e9f5ff, #dbe9ff);
+}
+
+.playlist-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.12);
+  filter: brightness(1.02);
+}
+
+/* ==============================
+   卡片內部 layout
+============================== */
+
+.playlist-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+
+.playlist-tag {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.04);
+  color: #574236;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.playlist-dot {
+  color: #9ca3af;
+}
+
+.playlist-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.playlist-thumb {
+  width: 76px;
+  height: 76px;
+  border-radius: 18px;
+  flex-shrink: 0;
+  background: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 12px 18px rgba(0, 0, 0, 0.08);
+}
+
+.thumb1 {
+  background: linear-gradient(135deg, #ffddb0, #ff88b7);
+}
+
+.thumb2 {
+  background: linear-gradient(135deg, #8be1ff, #5d7bff);
+}
+
+.thumb3 {
+  background: linear-gradient(135deg, #ffc2c2, #ff6b8b);
+}
+
+.thumb4 {
+  background: linear-gradient(135deg, #bfffd0, #59e0ff);
+}
+
+.playlist-text h4 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #2f2520;
+}
+
+.playlist-text p {
+  margin: 0;
+  font-size: 13px;
+  color: #6b5540;
+  line-height: 1.5;
+}
+
+.playlist-footer {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.playlist-icon-circle {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+  font-size: 18px;
+}
+
+.playlist-cta {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2f2520;
+}

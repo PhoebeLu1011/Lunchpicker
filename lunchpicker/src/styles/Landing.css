@@ -1,0 +1,301 @@
+/* src/styles/Landing.css */
+
+.landing-shell {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: radial-gradient(circle at 20% 20%, rgba(255, 205, 173, 0.18), transparent 40%),
+    radial-gradient(circle at 80% 10%, rgba(183, 210, 255, 0.16), transparent 38%),
+    linear-gradient(180deg, #fffaf6 0%, #fff6f0 40%, #fff3ea 100%);
+  color: #2f2520;
+}
+
+.moving-blobs {
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(circle at 15% 25%, rgba(255, 184, 150, 0.32), transparent 45%),
+    radial-gradient(circle at 75% 20%, rgba(164, 209, 255, 0.28), transparent 40%),
+    radial-gradient(circle at 60% 80%, rgba(255, 193, 160, 0.26), transparent 45%);
+  filter: blur(12px);
+  animation: landing-float 16s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes landing-float {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-2%, -1%, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.landing-ridges {
+  position: absolute;
+  inset: 140px 8% auto 8%;
+  height: 260px;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.06), transparent 60%),
+    conic-gradient(from 140deg at 50% 100%, rgba(255, 189, 154, 0.28), rgba(187, 214, 255, 0.18), rgba(255, 211, 187, 0.22), rgba(255, 189, 154, 0.28));
+  mask-image: radial-gradient(90% 120% at 50% 100%, black 50%, transparent 100%);
+  opacity: 0.45;
+  animation: ridge-shift 18s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.landing-top {
+  position: sticky;
+  top: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px;
+  z-index: 1;
+}
+
+.landing-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+  color: #2f2520;
+}
+
+.logo-mark {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: conic-gradient(from 90deg, #ffcda5, #ffb78f, #e7d0ff, #9cc6ff, #ffcda5);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.1);
+  animation: logo-spin 6s ease-in-out infinite;
+}
+
+.logo-text {
+  font-weight: 800;
+}
+
+.landing-hero {
+  position: relative;
+  padding: 64px 16px 24px;
+}
+
+.landing-hero-wave {
+  position: absolute;
+  inset: -15% -10% auto -10%;
+  height: 320px;
+  background: radial-gradient(circle at 20% 30%, rgba(255, 205, 173, 0.28), transparent 45%),
+    radial-gradient(circle at 80% 20%, rgba(183, 210, 255, 0.22), transparent 42%),
+    linear-gradient(120deg, rgba(255, 215, 194, 0.2), rgba(183, 210, 255, 0.2));
+  filter: blur(18px);
+  animation: hero-flow 18s ease-in-out infinite;
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.landing-logo {
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+}
+
+.landing-ghost {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.65);
+  padding: 10px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(6px);
+}
+
+.landing-main {
+  position: relative;
+  z-index: 1;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 32px 16px 48px;
+  text-align: center;
+}
+
+.landing-kicker {
+  font-size: 14px;
+  color: #b5694f;
+  margin-bottom: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.landing-title {
+  font-size: clamp(28px, 4vw, 36px);
+  font-weight: 800;
+  margin: 0 0 8px;
+}
+
+.title-glow {
+  position: relative;
+  display: inline-block;
+  background: linear-gradient(135deg, #ffb98a, #c9a5ff, #9cc6ff);
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: title-sheen 4.5s ease-in-out infinite;
+}
+
+.landing-desc {
+  margin: 0 auto 18px;
+  max-width: 640px;
+  color: #6b5540;
+  line-height: 1.6;
+}
+
+.landing-date {
+  margin: 0;
+  color: #8a6c5c;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+.landing-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.landing-primary {
+  border: none;
+  background: linear-gradient(135deg, #ffcda5, #ffb78f);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 14px 28px rgba(255, 185, 143, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.landing-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 36px rgba(255, 185, 143, 0.4);
+}
+
+.landing-secondary {
+  border: 1px solid #2f2520;
+  background: transparent;
+  color: #2f2520;
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.landing-cards {
+  margin-top: 26px;
+  display: grid;
+  gap: 14px;
+}
+
+@media (min-width: 768px) {
+  .landing-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.landing-card {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 18px;
+  padding: 16px 14px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+}
+
+.lc-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff3ea;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.landing-card h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.landing-card p {
+  margin: 0;
+  font-size: 13px;
+  color: #6b5540;
+  line-height: 1.5;
+}
+
+@keyframes ridge-shift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(2%, -1%, 0) scale(1.02);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes logo-spin {
+  0% {
+    transform: rotate(0deg);
+    filter: brightness(1);
+  }
+  50% {
+    transform: rotate(12deg);
+    filter: brightness(1.05);
+  }
+  100% {
+    transform: rotate(0deg);
+    filter: brightness(1);
+  }
+}
+
+@keyframes hero-flow {
+  0% {
+    transform: translate3d(0%, 0%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-2%, -2%, 0) scale(1.02);
+  }
+  100% {
+    transform: translate3d(0%, 0%, 0) scale(1);
+  }
+}
+
+@keyframes title-sheen {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}

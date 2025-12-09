@@ -1,32 +1,35 @@
 # app.py
-# app.py 開頭
 
 import os
 import datetime
 from functools import wraps
 
-from flask import Flask, request, jsonify, g
+from flask import Flask, request, jsonify, g, make_response
 from flask_cors import CORS
-from pymongo import MongoClient
+from pymongo import MongoClient, errors, ReturnDocument
 from bson.objectid import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import random
 import string
-
+import math
+import requests
 app = Flask(__name__)
 
 # CORS 設定
 CORS(
     app,
-    resources={r"/api/*": {"origins": [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ]}},
-    supports_credentials=False,  # 我們用 Authorization header，不用 cookie
+    resources={r"/*": {  
+        "origins": [
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+        ]
+    }},
+    supports_credentials=True,
     allow_headers=["Content-Type", "Authorization"],
     expose_headers=["Content-Type", "Authorization"],
 )
+
 
 # ====== 環境變數 ======
 MONGO_URI = os.getenv("MONGO_URI")  # Atlas 連線字串
@@ -39,6 +42,7 @@ client = MongoClient(MONGO_URI)
 db = client["lunchpicker"]
 users_col = db["users"]
 groups_col = db["groups"]
+blacklists_col = db["blacklists"]
 
 # ---- 建立唯一索引（只需要執行一次，之後會自動記住） ----
 try:
@@ -46,6 +50,14 @@ try:
 except:
     pass
 
+# 每個 user + 每個 OSM element 只能出現在黑名單一次
+try:
+    blacklists_col.create_index(
+        [("userId", 1), ("osmType", 1), ("osmId", 1)],
+        unique=True,
+    )
+except:
+    pass
 # ====== JWT 工具 ======
 
 def create_token(user_doc):
@@ -56,19 +68,15 @@ def create_token(user_doc):
         "exp": datetime.datetime.utcnow() + datetime.timedelta(days=JWT_EXPIRES_DAYS),
     }
     token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
-    # PyJWT 2.x 會回 str，如果是 bytes 記得 decode
     if isinstance(token, bytes):
         token = token.decode("utf-8")
     return token
 
-
 def get_current_user_from_request():
-    """從 Authorization: Bearer <token> 解析出目前登入的 user"""
-    auth_header = request.headers.get("Authorization", "")
-    if not auth_header.startswith("Bearer "):
-        return None
-
-    token = auth_header.split(" ", 1)[1].strip()
+    """
+    從 cookie 取得 JWT：access_token=<jwt>
+    """
+    token = request.cookies.get("access_token")
     if not token:
         return None
 
@@ -120,13 +128,13 @@ def serialize_group(group_doc, detail=False):
         "votingClosed": group_doc.get("votingClosed", False),  # 🔸新增
     }
 
-    # summary mode（我的團隊列表用）
+
     if not detail:
         members = group_doc.get("members", [])
         base["memberCount"] = len(members)
         return base
 
-    # detail mode（團隊內頁用）
+
     members_out = []
     for m in group_doc.get("members", []):
         raw_status = m.get("status")
@@ -151,7 +159,6 @@ def serialize_group(group_doc, detail=False):
             "createdAt": a.get("createdAt").isoformat() if a.get("createdAt") else None,
         })
 
-    # 方便算「我投哪一個」
     current_uid = None
     if getattr(g, "current_user", None):
         current_uid = g.current_user["_id"]
@@ -159,7 +166,7 @@ def serialize_group(group_doc, detail=False):
     cands_out = []
     candidates = group_doc.get("candidates", [])
     total_votes = 0
-    # 先算總票數
+
     for c in candidates:
         voters = c.get("voters", [])
         total_votes += len(voters)
@@ -192,6 +199,115 @@ def serialize_group(group_doc, detail=False):
     base["memberCount"] = len(members_out)
 
     return base
+
+OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+
+def build_address_from_tags(tags: dict) -> str:
+    """從 OSM 的 addr:* tags 組出一行地址字串（盡量有就好）"""
+    parts = []
+    for key in [
+        "addr:city",
+        "addr:district",
+        "addr:suburb",
+        "addr:street",
+        "addr:housenumber",
+    ]:
+        v = tags.get(key)
+        if v:
+            parts.append(v)
+    return " ".join(parts) if parts else tags.get("addr:full") or ""
+def normalize_osm_element(elem: dict) -> dict:
+    """
+    把 Overpass 回來的 element 轉成前端/資料庫共用的格式
+    必備欄位：osmId, osmType, name, address, lat, lon
+    額外欄位：
+      - category: "restaurant" / "fast_food" / "cafe" / "other"
+      - cuisine:  原始 OSM 的 cuisine tag（可能是 "japanese;sushi" 之類）
+    """
+    tags = elem.get("tags", {}) or {}
+    name = tags.get("name") or "未命名餐廳"
+
+    # ---- 餐廳類別分類 ----
+    amenity = (tags.get("amenity") or "").strip().lower()
+    if amenity in ("restaurant", "fast_food", "cafe"):
+        category = amenity
+    else:
+        category = "other"
+
+
+    cuisine = tags.get("cuisine")  
+
+    # node 有 lat/lon，way/relation 用 center
+    lat = elem.get("lat")
+    lon = elem.get("lon")
+    center = elem.get("center") or {}
+    if lat is None and "lat" in center:
+        lat = center["lat"]
+    if lon is None and "lon" in center:
+        lon = center["lon"]
+
+    address = build_address_from_tags(tags)
+
+    return {
+        "osmId": elem["id"],
+        "osmType": elem["type"],   # "node" / "way" / "relation"
+        "name": name,
+        "address": address,
+        "lat": lat,
+        "lon": lon,
+        "category": category,      # "restaurant" / "fast_food" / "cafe" / "other"
+        "cuisine": cuisine,        # e.g. "japanese;sushi"
+    }
+
+
+def haversine_distance_m(lat1, lon1, lat2, lon2) -> float:
+    """簡單算兩點距離（公尺），給前端顯示用，可有可無"""
+    R = 6371000  # 地球半徑（公尺）
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+
+    a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c
+
+def query_overpass_restaurants(lat: float, lon: float, radius: int = 600, cuisine: str = "ALL"):
+    """
+    呼叫 Overpass 找某個位置附近的餐廳/速食/咖啡廳
+    radius 單位：公尺
+    cuisine: "all" 代表不篩選，其它字串會用 regex 套在 "cuisine" tag 上
+    """
+
+    try:
+        radius = int(radius)
+    except Exception:
+        radius = 600
+    radius = max(100, min(radius, 5000))  # 100m ~ 5km 之間
+
+    # cuisine 過濾（regex）
+    # 前端會傳：ALL / chinese / japanese / fast_food / ...
+    cuisine_filter = ""
+    if cuisine and cuisine.lower() != "all":
+        safe_cuisine = cuisine.replace('"', "").replace("'", "")
+        cuisine_filter = f'["cuisine"~"{safe_cuisine}", i]'
+
+    query = f"""
+    [out:json][timeout:25];
+    (
+      node["amenity"~"restaurant|fast_food|cafe"]{cuisine_filter}(around:{radius},{lat},{lon});
+      way["amenity"~"restaurant|fast_food|cafe"]{cuisine_filter}(around:{radius},{lat},{lon});
+      relation["amenity"~"restaurant|fast_food|cafe"]{cuisine_filter}(around:{radius},{lat},{lon});
+    );
+    out center;
+    """
+
+    app.logger.debug("[Overpass] query: %s", query)
+
+    resp = requests.post(OVERPASS_URL, data={"data": query}, timeout=30)
+    resp.raise_for_status()
+    data = resp.json()
+    return data.get("elements", [])
 
 
 #====================
@@ -238,45 +354,57 @@ def register():
             "id": str(user_doc["_id"]),
             "email": user_doc["email"],
             "name": user_doc["name"],
+            "createdAt": user_doc.get("createdAt").isoformat() if user_doc.get("createdAt") else None,
         }
     }), 201
+
 #====================
 #登入 API
 #====================
+from werkzeug.security import check_password_hash
+from flask import make_response
+
 @app.route("/api/auth/login", methods=["POST"])
 def login():
     data = request.get_json() or {}
-
     email = (data.get("email") or "").strip().lower()
     password = data.get("password") or ""
 
     if not email or not password:
-        return jsonify({"ok": False, "error": "email 與 password 為必填"}), 400
+        return jsonify({"ok": False, "error": "Email 與密碼為必填"}), 400
 
     user = users_col.find_one({"email": email})
     if not user:
         return jsonify({"ok": False, "error": "帳號或密碼錯誤"}), 401
 
-    if not check_password_hash(user.get("passwordHash", ""), password):
-        return jsonify({"ok": False, "error": "帳號或密碼錯誤"}), 401
 
-    # 更新最後登入時間
-    users_col.update_one(
-        {"_id": user["_id"]},
-        {"$set": {"lastLoginAt": datetime.datetime.utcnow()}}
-    )
+    if not check_password_hash(user["passwordHash"], password):
+        return jsonify({"ok": False, "error": "帳號或密碼錯誤"}), 401
 
     token = create_token(user)
 
-    return jsonify({
+    resp = make_response(jsonify({
         "ok": True,
-        "token": token,
         "user": {
             "id": str(user["_id"]),
             "email": user["email"],
             "name": user.get("name"),
+            "createdAt": user.get("createdAt").isoformat() if user.get("createdAt") else None,
         }
-    })
+    }))
+
+    # 設 HttpOnly cookie（dev 版）
+    resp.set_cookie(
+        "access_token",
+        token,
+        httponly=True,
+        samesite="Lax",
+        max_age=JWT_EXPIRES_DAYS * 24 * 60 * 60,
+    )
+
+    return resp
+
+
 #====================
 #查看當前登入者
 #====================
@@ -298,9 +426,11 @@ def me():
 #====================
 @app.route("/api/auth/logout", methods=["POST"])
 def logout():
-    # JWT 這種 stateless token，後端通常不用清除，
-    # 前端把 localStorage 裡的 token 刪掉就算登出。
-    return jsonify({"ok": True})
+    resp = make_response(jsonify({"ok": True}))
+    # 清空 cookie
+    resp.set_cookie("access_token", "", expires=0)
+    return resp
+
 
 @app.route("/api/user/profile", methods=["PUT"])
 @login_required
@@ -313,7 +443,6 @@ def update_profile():
         {"$set": {"name": nickname}}
     )
 
-    # 重新查最新資料（可選）
     user = users_col.find_one({"_id": g.current_user["_id"]})
 
     return jsonify({
@@ -511,7 +640,6 @@ def add_announcement(group_id):
     except Exception:
         return jsonify({"ok": False, "error": "group_id 無效"}), 400
 
-    # 只有團長可以發公告
     uid = g.current_user["_id"]
     group = groups_col.find_one({"_id": oid, "ownerId": uid})
     if not group:
@@ -546,7 +674,7 @@ def add_candidate(group_id):
     except Exception:
         return jsonify({"ok": False, "error": "group_id 無效"}), 400
 
-    # 只要是成員就可以加候選餐廳；投票關閉時也可以視情況鎖住（這裡我先允許）
+
     uid = g.current_user["_id"]
     display_name = g.current_user.get("name") or g.current_user["email"]
 
@@ -561,7 +689,7 @@ def add_candidate(group_id):
         "createdById": uid,
         "createdByName": display_name,
         "createdAt": datetime.datetime.utcnow(),
-        "voters": [],  # 一開始沒人投
+        "voters": [],  
     }
 
     groups_col.update_one(
@@ -612,7 +740,7 @@ def delete_group(group_id):
 @login_required
 def update_vote(group_id):
     data = request.get_json() or {}
-    cand_id = data.get("candidateId")  # 可以是 None (取消投票)
+    cand_id = data.get("candidateId") 
 
     try:
         oid = ObjectId(group_id)
@@ -636,7 +764,7 @@ def update_vote(group_id):
         except Exception:
             return jsonify({"ok": False, "error": "candidateId 無效"}), 400
 
-    # 更新 voters：先從所有候選移除我
+
     changed = False
     for c in candidates:
         voters = c.get("voters", [])
@@ -645,7 +773,7 @@ def update_vote(group_id):
             c["voters"] = voters
             changed = True
 
-    # 如果有指定新的 candidate，幫我加回去（代表投這一家）
+
     if target_oid is not None:
         found_target = False
         for c in candidates:
@@ -742,6 +870,180 @@ def update_member_status(group_id):
 
     group = groups_col.find_one({"_id": oid})
     return jsonify({"ok": True, "group": serialize_group(group, detail=True)})
+
+# ====== 黑名單 API ======
+#取得自己的黑名單
+@app.route("/api/blacklists/my", methods=["GET"])
+@login_required
+def get_my_blacklists():
+    user = g.current_user
+    user_id = user["_id"]
+
+    docs = blacklists_col.find({"userId": user_id}).sort("createdAt", -1)
+
+    items = []
+    for d in docs:
+        items.append({
+            "id": str(d["_id"]),
+            "osmId": d.get("osmId"),
+            "osmType": d.get("osmType"),
+            "name": d.get("name"),
+            "address": d.get("address"),
+            "lat": d.get("lat"),
+            "lon": d.get("lon"),
+            "createdAt": d.get("createdAt").isoformat() if d.get("createdAt") else None,
+        })
+
+    return jsonify({"ok": True, "items": items})
+# 新增一筆黑名單
+@app.route("/api/blacklists", methods=["POST"])
+@login_required
+def add_blacklist():
+    try:
+        user = g.current_user
+        user_id = user["_id"]
+
+        data = request.get_json() or {}
+        osm_id = data.get("osmId")
+        osm_type = (data.get("osmType") or "").strip()
+
+        if osm_id is None or not osm_type:
+            return jsonify({"ok": False, "error": "osmId 與 osmType 為必填"}), 400
+
+        try:
+            osm_id = int(osm_id)
+        except Exception:
+            return jsonify({"ok": False, "error": "osmId 必須是數字"}), 400
+
+        name = (data.get("name") or "").strip() or "未命名餐廳"
+        address = (data.get("address") or "").strip()
+        lat = data.get("lat")
+        lon = data.get("lon")
+
+        now = datetime.datetime.utcnow()
+
+        doc = blacklists_col.find_one_and_update(
+            {
+                "userId": user_id,
+                "osmType": osm_type,
+                "osmId": osm_id,
+            },
+            {
+
+                "$set": {
+                    "userId": user_id,
+                    "osmType": osm_type,
+                    "osmId": osm_id,
+                    "name": name,
+                    "address": address,
+                    "lat": lat,
+                    "lon": lon,
+                },
+                # createdAt 只在第一次 insert 時塞
+                "$setOnInsert": {
+                    "createdAt": now,
+                },
+            },
+            upsert=True,
+            return_document=ReturnDocument.AFTER,
+        )
+
+        if not doc:
+            return jsonify({"ok": False, "error": "伺服器錯誤：找不到黑名單資料"}), 500
+
+        return jsonify({
+            "ok": True,
+            "item": {
+                "id": str(doc["_id"]),
+                "osmId": doc.get("osmId"),
+                "osmType": doc.get("osmType"),
+                "name": doc.get("name"),
+                "address": doc.get("address"),
+                "lat": doc.get("lat"),
+                "lon": doc.get("lon"),
+                "createdAt": doc.get("createdAt").isoformat() if doc.get("createdAt") else None,
+            }
+        })
+
+    except Exception as e:
+        app.logger.exception("add_blacklist unexpected error")
+        return jsonify({"ok": False, "error": f"伺服器錯誤：{e}"}), 500
+
+
+#刪除黑名單一筆
+@app.route("/api/blacklists/<black_id>", methods=["DELETE"])
+@login_required
+def delete_blacklist(black_id):
+    user = g.current_user
+    user_id = user["_id"]
+
+    try:
+        oid = ObjectId(black_id)
+    except Exception:
+        return jsonify({"ok": False, "error": "blacklist id 格式錯誤"}), 400
+
+    result = blacklists_col.delete_one({
+        "_id": oid,
+        "userId": user_id,
+    })
+
+    if result.deleted_count == 0:
+        return jsonify({"ok": False, "error": "找不到該黑名單或無權限"}), 404
+
+    return jsonify({"ok": True})
+
+#抽餐廳 / 搜尋餐廳 API
+@app.route("/api/lunch/search", methods=["GET"])
+@login_required
+def lunch_search():
+    user = g.current_user
+    user_id = user["_id"]
+
+    lat_str = request.args.get("lat")
+    lon_str = request.args.get("lon")
+    radius_str = request.args.get("radius", "600")
+    cuisine = request.args.get("cuisine", "ALL").strip().lower()
+
+    if not lat_str or not lon_str:
+        return jsonify({"ok": False, "error": "lat 與 lon 為必填參數"}), 400
+
+    try:
+        lat = float(lat_str)
+        lon = float(lon_str)
+        radius = int(radius_str)
+    except:
+        return jsonify({"ok": False, "error": "lat/lon/radius 格式錯誤"}), 400
+
+    black_docs = list(blacklists_col.find({"userId": user_id}))
+    black_index = {
+        (d.get("osmType"), int(d.get("osmId"))): str(d["_id"])
+        for d in black_docs
+    }
+
+    try:
+        elements = query_overpass_restaurants(lat, lon, radius, cuisine)
+    except requests.RequestException as e:
+        return jsonify({"ok": False, "error": f"Overpass API 錯誤: {e}"}), 502
+
+    restaurants = []
+    for elem in elements:
+        r = normalize_osm_element(elem)
+        if r["lat"] is None or r["lon"] is None:
+            continue
+
+        key = (r["osmType"], int(r["osmId"]))
+        bl_id = black_index.get(key)
+
+        r["distance"] = haversine_distance_m(lat, lon, r["lat"], r["lon"])
+        r["isBlacklisted"] = bl_id is not None
+        if bl_id:
+            r["blacklistId"] = bl_id
+
+        restaurants.append(r)
+
+    restaurants.sort(key=lambda x: x.get("distance") or 0)
+
+    return jsonify({"ok": True, "restaurants": restaurants})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

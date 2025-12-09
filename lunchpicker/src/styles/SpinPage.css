@@ -1,0 +1,80 @@
+/* src/styles/SpinPage.css */
+
+.spin-page {
+  min-height: calc(100vh - 56px); 
+  padding: 2.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.spin-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #334155; 
+}
+
+.spin-wheel-wrapper {
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+.spin-wheel {
+  border-radius: 9999px;
+  overflow: visible;
+  filter: drop-shadow(0 10px 15px rgba(15, 23, 42, 0.25));
+}
+
+
+.spin-button {
+  padding: 1rem 2.5rem;
+  background-color: #0ea5e9; 
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+
+  box-shadow: 0 10px 15px rgba(15, 23, 42, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  animation: spin-button-pulse 1.5s ease-in-out infinite;
+}
+
+.spin-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 15px 25px rgba(15, 23, 42, 0.25);
+}
+
+
+@keyframes spin-button-pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+
+.spin-status {
+  color: #6b7280; /* slate-500-ish */
+  font-size: 1.125rem;
+  font-weight: 500;
+  animation: spin-status-bounce 1.2s infinite;
+}
+
+@keyframes spin-status-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}

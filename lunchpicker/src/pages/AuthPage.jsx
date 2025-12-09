@@ -1,11 +1,13 @@
 // src/pages/AuthPage.jsx
 import { useState } from "react";
-import { login, register } from "../authClient";
-import LunchRunner from "../components/LunchRunner";
-import "./AuthPage.css";
+import { register as apiRegister } from "../authClient";
+import { useAuth } from "../context/AuthContext";
+//import LunchRunner from "../components/LunchRunner";
+import "../styles/AuthPage.css";
 
 export default function AuthPage({ onLogin }) {
-  const [mode, setMode] = useState("login");
+  const { login: ctxLogin } = useAuth();
+  const [mode, setMode] = useState("login"); // "login" | "register"
   const [msg, setMsg] = useState("");
 
   async function handleLogin(e) {
@@ -14,12 +16,13 @@ export default function AuthPage({ onLogin }) {
     const email = form.get("email");
     const password = form.get("password");
 
-    const res = await login({ email, password });
-    if (res.ok) {
+    try {
+      const user = await ctxLogin(email, password);
+      if (onLogin) onLogin(user);
       setMsg("");
-      onLogin(res.user);
-    } else {
-      setMsg(res.error || "登入失敗");
+    } catch (err) {
+      console.error(err);
+      setMsg(err.message || "登入失敗，請稍後再試");
     }
   }
 
@@ -29,32 +32,38 @@ export default function AuthPage({ onLogin }) {
     const email = form.get("email");
     const password = form.get("password");
 
-    const res = await register({ email, password });
-    if (res.ok) {
-      setMsg("註冊成功，請登入");
+    try {
+      const res = await apiRegister({ email, password });
+      if (!res.ok) {
+        setMsg(res.error || "註冊失敗");
+        return;
+      }
+      setMsg("註冊成功，請使用剛剛的帳號密碼登入");
       setMode("login");
-    } else {
-      setMsg(res.error || "註冊失敗");
+    } catch (err) {
+      console.error(err);
+      setMsg(err.message || "註冊失敗，請稍後再試");
     }
   }
 
   return (
     <div className="auth-page">
-      <div className="auth-card-wrapper">
-        {/* 如果之後想放小動畫可以把這行打開 */}
-        {/* <LunchRunner /> */}
+      <div style={{ display: "none" }}>
+        {/*  <LunchRunner /> */}
+       
+      </div>
 
+      <div className="auth-card-wrapper">
         <div className="auth-card">
-          {/* Logo + 副標題 */}
           <div className="auth-header">
             <div className="auth-logo-circle">🍱</div>
             <div>
               <h1 className="auth-title">LunchPicker</h1>
-              <p className="auth-subtitle">欸!所以今天午餐要吃什麼?</p>
+              <p className="auth-subtitle">欸! 所以今天午餐要吃什麼?</p>
             </div>
           </div>
 
-          {/* Login / Register 切換膠囊 */}
+          {/* 登入 / 註冊切換 */}
           <div className="auth-toggle-group">
             <button
               type="button"
@@ -71,6 +80,7 @@ export default function AuthPage({ onLogin }) {
             >
               登入
             </button>
+
             <button
               type="button"
               className={
@@ -88,15 +98,14 @@ export default function AuthPage({ onLogin }) {
             </button>
           </div>
 
-          {/* 表單區 */}
           {mode === "login" ? (
             <form onSubmit={handleLogin}>
               <div className="auth-field">
-                <label className="auth-label" htmlFor="email">
+                <label className="auth-label" htmlFor="login-email">
                   Email
                 </label>
                 <input
-                  id="email"
+                  id="login-email"
                   name="email"
                   type="email"
                   className="auth-input"
@@ -105,11 +114,11 @@ export default function AuthPage({ onLogin }) {
               </div>
 
               <div className="auth-field">
-                <label className="auth-label" htmlFor="password">
+                <label className="auth-label" htmlFor="login-password">
                   密碼
                 </label>
                 <input
-                  id="password"
+                  id="login-password"
                   name="password"
                   type="password"
                   className="auth-input"
@@ -117,7 +126,7 @@ export default function AuthPage({ onLogin }) {
                 />
               </div>
 
-              <button className="auth-primary-btn" type="submit">
+              <button type="submit" className="auth-primary-btn">
                 登入
               </button>
             </form>
@@ -149,7 +158,7 @@ export default function AuthPage({ onLogin }) {
                 />
               </div>
 
-              <button className="auth-primary-btn" type="submit">
+              <button type="submit" className="auth-primary-btn">
                 註冊
               </button>
             </form>

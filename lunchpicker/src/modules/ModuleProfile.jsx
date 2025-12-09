@@ -1,90 +1,79 @@
 // src/modules/ModuleProfile.jsx
 import { useState, useEffect } from "react";
 
-export default function ModuleProfile({ user }) {
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
+export default function ModuleProfile({ user, onUserUpdate }) {
   if (!user) return <div>載入中...</div>;
 
-  const STORAGE_KEY = `userProfile_${user.id}`;
-
-  // 從 DB 來的原始資料
   const dbNickname = user.name || "";
   const dbEmail = user.email || "";
 
   // ===== 狀態 =====
   const [isEditing, setIsEditing] = useState(false);
-
-  // 「基準值」= 當前這個使用者最後一次儲存後的暱稱 / email
-  const [baseNickname, setBaseNickname] = useState(dbNickname);
-  const [baseEmail, setBaseEmail] = useState(dbEmail);
-
-  // 表單目前的值
   const [nickname, setNickname] = useState(dbNickname);
-  const [email, setEmail] = useState(dbEmail);
+  const [baseNickname, setBaseNickname] = useState(dbNickname);
   const [isModified, setIsModified] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
-  // 帳號資訊
   const userId = user.id || "";
-
-  // createdAt 從後端來，如果是 ISO string 就轉成人看得懂的日期
   const createdAt = user.createdAt
     ? new Date(user.createdAt).toLocaleDateString("zh-TW")
     : "尚未提供";
 
-  // ===== 首次載入 / 換使用者時：從 localStorage 覆蓋表單 + 基準值 =====
   useEffect(() => {
-    let nick = dbNickname;
-    let mail = dbEmail;
+    const n = user.name || "";
+    setNickname(n);
+    setBaseNickname(n);
+    setIsModified(false);
+    setIsEditing(false);
+    setError("");
+  }, [user.id, user.name]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError("");
 
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw);
-        nick = saved.nickname || nick;
-        mail = saved.email || mail;
+      const resp = await fetch(`${API_BASE}/api/user/profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", 
+        body: JSON.stringify({ nickname }),
+      });
+
+      const data = await resp.json();
+
+      if (!resp.ok || !data.ok) {
+        throw new Error(data.error || "儲存失敗");
       }
+
+      const newUser = data.user;
+
+      setBaseNickname(newUser.name || "");
+      setNickname(newUser.name || "");
+      setIsModified(false);
+      setIsEditing(false);
+
+      if (onUserUpdate) {
+        onUserUpdate(newUser);
+      }
+
+      alert("已儲存到伺服器！");
     } catch (e) {
-      console.error("載入 localStorage 失敗", e);
+      console.error(e);
+      setError(e.message || "儲存失敗，請稍後再試");
+    } finally {
+      setSaving(false);
     }
-
-    setNickname(nick);
-    setEmail(mail);
-    setBaseNickname(nick);
-    setBaseEmail(mail);
-    setIsModified(false);
-    setIsEditing(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user.id]);
-
-  // 檢查目前值和「基準值」是否不同
-  const checkModified = (nick = nickname, mail = email) => {
-    setIsModified(nick !== baseNickname || mail !== baseEmail);
-  };
-
-  const handleSave = () => {
-    const toSave = { nickname, email };
-
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
-    } catch (e) {
-      console.error("儲存失敗", e);
-      alert("儲存失敗（localStorage 錯誤）");
-      return;
-    }
-
-    // 更新基準值
-    setBaseNickname(nickname);
-    setBaseEmail(email);
-    setIsModified(false);
-    setIsEditing(false);
-    alert("儲存成功！（目前只存到本機）");
   };
 
   const handleCancel = () => {
-    // 回到基準值
     setNickname(baseNickname);
-    setEmail(baseEmail);
     setIsModified(false);
     setIsEditing(false);
+    setError("");
   };
 
   // ====== UI ======
@@ -93,8 +82,8 @@ export default function ModuleProfile({ user }) {
       className="profile-container"
       onSubmit={(e) => e.preventDefault()}
     >
-      {/* 右上角 編輯按鈕 */}
-      <div className="d-flex justify-content-end mb-3">
+      {/* 編輯按鈕 */}
+      <div className="profile-header-row">
         {!isEditing && (
           <button
             type="button"
@@ -120,55 +109,50 @@ export default function ModuleProfile({ user }) {
           </svg>
         </div>
       </div>
-      {/* 使用者名稱（鎖死不讓改） */}
+
+      {/* 暱稱（可以改，對應 DB 的 name） */}
       <div className="profile-field">
-        <label className="profile-label">
-          <svg width="14" height="14" fill="#777" viewBox="0 0 16 16">
-            <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
-          </svg>
-          &nbsp; 使用者名稱
-        </label>
+        <label className="profile-label">暱稱</label>
         <input
           className="profile-input"
           type="text"
-          value={user.name || dbNickname || user.email?.split("@")[0] || ""}
-          readOnly
+          value={nickname}
+          onChange={(e) => {
+            const v = e.target.value;
+            setNickname(v);
+            setIsModified(v !== baseNickname);
+          }}
+          readOnly={!isEditing}
+          maxLength={30}
         />
-        <small className="text-muted" style={{ fontSize: "0.8rem" }}>
-          不可修改
+        <small className="profile-note">
+          這會顯示在團隊、黑名單等地方
         </small>
       </div>
 
-      {/* Email（可編輯） */}
+      {/* Email（不開放修改） */}
       <div className="profile-field">
-        <label className="profile-label">
-          <svg width="14" height="14" fill="#777" viewBox="0 0 16 16">
-            <path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414.05 3.555ZM0 4.697v7.104l5.803-3.558L0 4.697Z" />
-          </svg>
-          &nbsp; Email
-        </label>
+        <label className="profile-label">Email</label>
         <input
           className="profile-input"
           type="email"
-          value={email}
-          onChange={(e) => {
-            const v = e.target.value;
-            setEmail(v);
-            checkModified(nickname, v);
-          }}
-          readOnly={!isEditing}
+          value={dbEmail}
+          readOnly
         />
+        <small className="profile-note">目前暫不支援線上修改 Email</small>
       </div>
 
+      {/* 錯誤訊息 */}
+      {error && <div className="profile-error">{error}</div>}
 
-
-      {/* 底部按鈕：只有在編輯模式才顯示 */}
+      {/*底部按鈕(編輯顯示only) */}
       {isEditing && (
         <div className="profile-buttons">
           <button
             type="button"
             className="profile-btn-cancel"
             onClick={handleCancel}
+            disabled={saving}
           >
             取消
           </button>
@@ -176,13 +160,12 @@ export default function ModuleProfile({ user }) {
             type="button"
             className="profile-btn-save"
             onClick={handleSave}
-            disabled={!isModified}
+            disabled={!isModified || saving}
           >
-            儲存變更
+            {saving ? "儲存中..." : "儲存變更"}
           </button>
         </div>
       )}
-
 
       {/* 帳號資訊 */}
       <div className="profile-section-title">帳號資訊</div>
@@ -196,7 +179,6 @@ export default function ModuleProfile({ user }) {
         <span>建立時間</span>
         <span className="profile-info-value">{createdAt}</span>
       </div>
-
     </form>
   );
 }

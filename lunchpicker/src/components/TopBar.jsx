@@ -1,40 +1,34 @@
+// src/components/TopBar.jsx
 import { useState } from "react";
+import "../styles/TopBar.css";  
 
 export default function TopBar({ active, onChangeActive, user, onLogout }) {
   const [open, setOpen] = useState(false);
 
   const handleSelect = (key) => {
     onChangeActive(key);
-    setOpen(false); // 關閉菜單
+    setOpen(false); 
   };
 
   return (
     <>
       {/* ======= Top Bar ======= */}
       <header className="app-topbar d-flex align-items-center justify-content-between">
-        {/* 左上角 Logo → 回首頁 */}
         <div
-          style={{
-            fontWeight: 700,
-            fontSize: "1.2rem",
-            cursor: "pointer",
-          }}
+          className="app-topbar-logo"
           onClick={() => handleSelect("home")}
         >
           LunchPicker
         </div>
 
-        {/* 右上角: email + 漢堡選單 */}
         <div className="d-flex align-items-center gap-3">
           <span
-            className="small text-muted"
-            style={{ cursor: "pointer" }}
+            className="app-topbar-email"
             onClick={() => onChangeActive("profile")}
-            >
+          >
             {user?.email}
           </span>
 
-          {/* 漢堡按鈕 */}
           <button
             className="hamburger-btn"
             onClick={() => setOpen((prev) => !prev)}
@@ -85,10 +79,9 @@ export default function TopBar({ active, onChangeActive, user, onLogout }) {
           <button
             className={`side-item ${active === "profile" ? "active" : ""}`}
             onClick={() => handleSelect("profile")}
-            >
+          >
             個人資料
           </button>
-
 
           <hr />
 

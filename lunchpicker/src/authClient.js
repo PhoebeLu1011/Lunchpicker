@@ -1,76 +1,101 @@
 // src/authClient.js
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
+
+// ===== 登入 =====
 export async function login({ email, password }) {
-  const res = await fetch(`${API_BASE}/api/auth/login`, {
+  const resp = await fetch(`${API_BASE}/api/auth/login`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
+    credentials: "include", 
     body: JSON.stringify({ email, password }),
   });
 
-  const data = await res.json().catch(() => ({}));
+  const data = await resp.json().catch(() => ({}));
 
-  if (!res.ok || !data.ok) {
-    return { ok: false, error: data.error || "登入失敗" };
+  if (!resp.ok || data.ok === false) {
+    return {
+      ok: false,
+      error: data.error || data.message || "登入失敗",
+    };
   }
 
-  // 把 JWT token 存起來（之後呼叫其他 API 要帶 Authorization）
-  if (data.token) {
-    localStorage.setItem("lp_token", data.token);
+  const rawUser = data.user || {};
+
+  return {
+    ok: true,
+    user: {
+      id: rawUser.id || rawUser._id,
+      email: rawUser.email,
+      name: rawUser.name || null,
+      createdAt: rawUser.createdAt || null,
+    },
+  };
+}
+
+
+export async function getMe() {
+  const resp = await fetch(`${API_BASE}/api/auth/me`, {
+    method: "GET",
+    credentials: "include",
+  });
+
+  if (resp.status === 401) {
+    // 沒登入 / cookie 無效
+    return null;
+  }
+
+  const data = await resp.json().catch(() => ({}));
+  if (!resp.ok || data.ok === false) {
+    return null;
+  }
+
+  const rawUser = data.user || {};
+  return {
+    id: rawUser.id || rawUser._id,
+    email: rawUser.email,
+    name: rawUser.name || null,
+    createdAt: rawUser.createdAt || null,
+  };
+}
+
+// ===== 登出=====
+export async function logout() {
+  const resp = await fetch(`${API_BASE}/api/auth/logout`, {
+    method: "POST",
+    credentials: "include",
+  });
+
+  const data = await resp.json().catch(() => ({}));
+  if (!resp.ok || data.ok === false) {
+    throw new Error(data.error || data.message || "登出失敗");
+  }
+  return true;
+}
+
+// ===== 註冊 =====
+export async function register({ email, password, name }) {
+  const payload = { email, password };
+  if (name) payload.name = name;
+
+  const resp = await fetch(`${API_BASE}/api/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include", 
+    body: JSON.stringify(payload),
+  });
+
+  const data = await resp.json().catch(() => ({}));
+  if (!resp.ok || data.ok === false) {
+    return {
+      ok: false,
+      error: data.error || data.message || "註冊失敗",
+    };
   }
 
   return {
     ok: true,
-    user: data.user,
-    token: data.token,
+    user: data.user || null,
   };
-}
-
-export async function register({ email, password }) {
-  const res = await fetch(`${API_BASE}/api/auth/register`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ email, password }),
-  });
-
-  const data = await res.json().catch(() => ({}));
-
-  if (!res.ok || !data.ok) {
-    return { ok: false, error: data.error || "註冊失敗" };
-  }
-
-  return { ok: true };
-}
-
-export function getToken() {
-  return localStorage.getItem("lp_token") || "";
-}
-
-export function logout() {
-  localStorage.removeItem("lp_token");
-}
-
-export async function getMe() {
-  const token = getToken();
-  if (!token) {
-    return null;              // 沒 token 就當沒登入
-  }
-
-  const res = await fetch(`${API_BASE}/api/auth/me`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  const data = await res.json().catch(() => ({}));
-
-  if (!res.ok || !data.ok) {
-    return null;              // token 壞掉/過期 → 當作沒登入
-  }
-
-  return data.user;           // 成功就直接回 user 物件
 }

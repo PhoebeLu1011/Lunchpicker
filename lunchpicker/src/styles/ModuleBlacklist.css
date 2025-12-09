@@ -1,0 +1,238 @@
+.blacklist-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* 區塊標題 */
+.blacklist-section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+/* 表單 */
+.blacklist-search-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 16px;
+}
+
+.blacklist-form-row {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 200px;
+}
+
+.blacklist-label {
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 4px;
+}
+
+.blacklist-input,
+.blacklist-select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+
+.blacklist-search-button {
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: none;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #ffffff;
+  background: linear-gradient(135deg, #ffb78f, #5fb3ff);
+  box-shadow: 0 12px 26px rgba(95, 179, 255, 0.28);
+  transition: transform 0.1s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.blacklist-search-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 8px 18px rgba(95, 179, 255, 0.22);
+}
+
+/* 搜尋結果卡片 */
+.blacklist-results {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.blacklist-restaurant-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: #f9fafb;
+}
+
+.blacklist-restaurant-name {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.blacklist-restaurant-meta {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 2px;
+}
+
+.blacklist-restaurant-address {
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.blacklist-restaurant-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 黑名單列表 */
+.blacklist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.blacklist-item-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #f9fafb;
+}
+
+.blacklist-item-name {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.blacklist-item-address,
+.blacklist-item-meta {
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.blacklist-item-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+.blacklist-map-link {
+  font-size: 12px;
+  text-decoration: underline;
+  color: #2f6a94;
+}
+
+.blacklist-divider {
+  border: none;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+/* 通用提示 / 錯誤 */
+.blacklist-hint {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.blacklist-error {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #b91c1c;
+}
+
+/* 上方搜尋 bar */
+.blacklist-filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+/* 左邊兩個切換 button */
+.blacklist-filter-toggle {
+  display: inline-flex;
+  background: rgba(255, 238, 222, 0.7);
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 203, 170, 0.6);
+}
+
+.blacklist-filter-btn {
+  border: none;
+  background: transparent;
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  color: #6b5540;
+}
+
+.blacklist-filter-btn--active {
+  background: #ffffff;
+  color: #2f2520;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+}
+
+/* 關鍵字 input */
+.blacklist-filter-input {
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid #f0d9c8;
+  font-size: 13px;
+}
+/* 上方搜尋區塊：標題 + 跳轉按鈕橫排 */
+.blacklist-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 跳到黑名單按鈕 */
+.blacklist-jump-btn {
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.blacklist-jump-btn:hover {
+  background: rgba(255, 238, 222, 0.9);
+  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.08);
+}
+
+/* 搜尋結果區塊改成「內部可捲動」，避免撐太長 */
+.blacklist-results {
+  margin-top: 12px;
+  max-height: 360px;      /* 可以依自己畫面調整，例如 320 / 400 */
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* 滾動條可以看起來稍微好看一點（可選） */
+.blacklist-results::-webkit-scrollbar {
+  width: 6px;
+}
+.blacklist-results::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background-color: #ccc;
+}
