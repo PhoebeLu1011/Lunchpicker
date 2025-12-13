@@ -171,9 +171,7 @@ export default function HomePage({ user, onLogout }) {
                   </div>
 
                   <div className="playlist-footer">
-                    <span className="playlist-cta">
-                      管理清單 <span className="cta-arrow">→</span>
-                    </span>
+                    <span className="playlist-cta">管理清單</span>
                   </div>
                 </button>
               </div>
@@ -196,7 +194,7 @@ export default function HomePage({ user, onLogout }) {
         )}
 
         {active === "blacklist" && (
-          <ModuleWrapper title="黑名單管理">
+          <ModuleWrapper>
             <ModuleBlacklist />
           </ModuleWrapper>
         )}
