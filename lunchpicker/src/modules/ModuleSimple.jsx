@@ -177,7 +177,7 @@ export default function ModuleSimple() {
       <section className="simple-list-card">
         {restaurants.length === 0 ? (
           <div className="simple-empty">
-            <div className="empty-icon">🎲</div>
+            <div className="empty-icon"></div>
             <p className="mb-1">還沒有餐廳</p>
             <p className="extra-small text-muted mb-0">
               從右上角「新增餐廳」開始建立你的口袋名單吧！

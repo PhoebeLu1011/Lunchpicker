@@ -6,38 +6,55 @@ from functools import wraps
 
 from flask import Flask, request, jsonify, g, make_response
 from flask_cors import CORS
-from pymongo import MongoClient, errors, ReturnDocument
+from pymongo import MongoClient, ReturnDocument
 from bson.objectid import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import random
-import string
 import math
 import requests
+
 app = Flask(__name__)
 
-# CORS 設定
+# ======================
+# Env & Config
+# ======================
+
+# ---- CORS origins（Local + Render 用 env 控制） ----
+FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "").strip()
+EXTRA_ORIGINS = [o.strip() for o in os.getenv("EXTRA_ORIGINS", "").split(",") if o.strip()]
+
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+if FRONTEND_ORIGIN:
+    origins.append(FRONTEND_ORIGIN)
+origins.extend(EXTRA_ORIGINS)
+
 CORS(
     app,
-    resources={r"/*": {  
-        "origins": [
-            "http://localhost:5173",
-            "http://127.0.0.1:5173",
-        ]
-    }},
+    resources={r"/*": {"origins": origins}},
     supports_credentials=True,
     allow_headers=["Content-Type", "Authorization"],
     expose_headers=["Content-Type", "Authorization"],
 )
 
-
-# ====== 環境變數 ======
+# ---- Mongo / JWT ----
 MONGO_URI = os.getenv("MONGO_URI")  # Atlas 連線字串
-JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-change-me")
-JWT_ALG = "HS256" #用同一個密鑰（JWT_SECRET）來簽名跟驗證 token
-JWT_EXPIRES_DAYS = 7 #token 的有效期限 7 天後前端想要使用它 → 後端會回傳 401 token 已過期 前端就需要讓使用者重新登入
+if not MONGO_URI:
+    raise RuntimeError("MONGO_URI is not set. Please configure it in Render Environment Variables.")
 
-# ====== MongoDB ======
+JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-change-me")
+JWT_ALG = "HS256"
+JWT_EXPIRES_DAYS = 7
+
+# Render / production 判斷（用於 cookie SameSite/Secure）
+IS_PROD = (os.getenv("FLASK_ENV", "").lower() == "production") or bool(os.getenv("RENDER"))
+
+# ======================
+# MongoDB
+# ======================
 client = MongoClient(MONGO_URI)
 db = client["lunchpicker"]
 users_col = db["users"]
@@ -47,21 +64,22 @@ blacklists_col = db["blacklists"]
 # ---- 建立唯一索引（只需要執行一次，之後會自動記住） ----
 try:
     groups_col.create_index("code", unique=True)
-except:
+except Exception:
     pass
 
-# 每個 user + 每個 OSM element 只能出現在黑名單一次
 try:
     blacklists_col.create_index(
         [("userId", 1), ("osmType", 1), ("osmId", 1)],
         unique=True,
     )
-except:
+except Exception:
     pass
-# ====== JWT 工具 ======
+
+# ======================
+# JWT helpers
+# ======================
 
 def create_token(user_doc):
-    """用 user 資料產生 JWT"""
     payload = {
         "user_id": str(user_doc["_id"]),
         "email": user_doc["email"],
@@ -72,10 +90,8 @@ def create_token(user_doc):
         token = token.decode("utf-8")
     return token
 
+
 def get_current_user_from_request():
-    """
-    從 cookie 取得 JWT：access_token=<jwt>
-    """
     token = request.cookies.get("access_token")
     if not token:
         return None
@@ -91,13 +107,14 @@ def get_current_user_from_request():
     if not user_id:
         return None
 
-    user = users_col.find_one({"_id": ObjectId(user_id)})
+    try:
+        user = users_col.find_one({"_id": ObjectId(user_id)})
+    except Exception:
+        return None
     return user
 
 
 def login_required(f):
-    """需要登入的路由用這個 decorator 包起來"""
-
     @wraps(f)
     def wrapper(*args, **kwargs):
         user = get_current_user_from_request()
@@ -105,16 +122,18 @@ def login_required(f):
             return jsonify({"ok": False, "error": "未登入或 token 無效"}), 401
         g.current_user = user
         return f(*args, **kwargs)
-
     return wrapper
 
+# ======================
+# Group helpers
+# ======================
+
 def generate_group_code(length=5):
-    # 避免 0/O/1/I 等容易看錯的字
     chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
     return "".join(random.choice(chars) for _ in range(length))
 
+
 def serialize_group(group_doc, detail=False):
-    """把 Mongo 的 group doc 轉成前端需要的格式"""
     if not group_doc:
         return None
 
@@ -125,23 +144,18 @@ def serialize_group(group_doc, detail=False):
         "ownerId": str(group_doc.get("ownerId")) if group_doc.get("ownerId") else None,
         "createdAt": group_doc.get("createdAt").isoformat() if group_doc.get("createdAt") else None,
         "closed": group_doc.get("closed", False),
-        "votingClosed": group_doc.get("votingClosed", False),  # 🔸新增
+        "votingClosed": group_doc.get("votingClosed", False),
     }
-
 
     if not detail:
         members = group_doc.get("members", [])
         base["memberCount"] = len(members)
         return base
 
-
     members_out = []
     for m in group_doc.get("members", []):
         raw_status = m.get("status")
-        if not raw_status or raw_status == "unknown":
-            normalized_status = "join"
-        else:
-            normalized_status = raw_status
+        normalized_status = "join" if (not raw_status or raw_status == "unknown") else raw_status
 
         members_out.append({
             "userId": str(m.get("userId")),
@@ -159,21 +173,18 @@ def serialize_group(group_doc, detail=False):
             "createdAt": a.get("createdAt").isoformat() if a.get("createdAt") else None,
         })
 
-    current_uid = None
-    if getattr(g, "current_user", None):
-        current_uid = g.current_user["_id"]
+    current_uid = g.current_user["_id"] if getattr(g, "current_user", None) else None
 
-    cands_out = []
     candidates = group_doc.get("candidates", [])
     total_votes = 0
-
     for c in candidates:
-        voters = c.get("voters", [])
-        total_votes += len(voters)
+        total_votes += len(c.get("voters", []) or [])
 
+    cands_out = []
     for c in candidates:
-        voters = c.get("voters", [])
+        voters = c.get("voters", []) or []
         vote_count = len(voters)
+
         has_my_vote = False
         if current_uid is not None:
             has_my_vote = current_uid in voters
@@ -200,10 +211,13 @@ def serialize_group(group_doc, detail=False):
 
     return base
 
+# ======================
+# Overpass / Search
+# ======================
+
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
 def build_address_from_tags(tags: dict) -> str:
-    """從 OSM 的 addr:* tags 組出一行地址字串（盡量有就好）"""
     parts = []
     for key in [
         "addr:city",
@@ -216,28 +230,20 @@ def build_address_from_tags(tags: dict) -> str:
         if v:
             parts.append(v)
     return " ".join(parts) if parts else tags.get("addr:full") or ""
+
+
 def normalize_osm_element(elem: dict) -> dict:
-    """
-    把 Overpass 回來的 element 轉成前端/資料庫共用的格式
-    必備欄位：osmId, osmType, name, address, lat, lon
-    額外欄位：
-      - category: "restaurant" / "fast_food" / "cafe" / "other"
-      - cuisine:  原始 OSM 的 cuisine tag（可能是 "japanese;sushi" 之類）
-    """
     tags = elem.get("tags", {}) or {}
     name = tags.get("name") or "未命名餐廳"
 
-    # ---- 餐廳類別分類 ----
     amenity = (tags.get("amenity") or "").strip().lower()
     if amenity in ("restaurant", "fast_food", "cafe"):
         category = amenity
     else:
         category = "other"
 
+    cuisine = tags.get("cuisine")
 
-    cuisine = tags.get("cuisine")  
-
-    # node 有 lat/lon，way/relation 用 center
     lat = elem.get("lat")
     lon = elem.get("lon")
     center = elem.get("center") or {}
@@ -250,19 +256,18 @@ def normalize_osm_element(elem: dict) -> dict:
 
     return {
         "osmId": elem["id"],
-        "osmType": elem["type"],   # "node" / "way" / "relation"
+        "osmType": elem["type"],
         "name": name,
         "address": address,
         "lat": lat,
         "lon": lon,
-        "category": category,      # "restaurant" / "fast_food" / "cafe" / "other"
-        "cuisine": cuisine,        # e.g. "japanese;sushi"
+        "category": category,
+        "cuisine": cuisine,
     }
 
 
 def haversine_distance_m(lat1, lon1, lat2, lon2) -> float:
-    """簡單算兩點距離（公尺），給前端顯示用，可有可無"""
-    R = 6371000  # 地球半徑（公尺）
+    R = 6371000
     phi1 = math.radians(lat1)
     phi2 = math.radians(lat2)
     dphi = math.radians(lat2 - lat1)
@@ -272,21 +277,14 @@ def haversine_distance_m(lat1, lon1, lat2, lon2) -> float:
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
 
-def query_overpass_restaurants(lat: float, lon: float, radius: int = 600, cuisine: str = "ALL"):
-    """
-    呼叫 Overpass 找某個位置附近的餐廳/速食/咖啡廳
-    radius 單位：公尺
-    cuisine: "all" 代表不篩選，其它字串會用 regex 套在 "cuisine" tag 上
-    """
 
+def query_overpass_restaurants(lat: float, lon: float, radius: int = 600, cuisine: str = "ALL"):
     try:
         radius = int(radius)
     except Exception:
         radius = 600
-    radius = max(100, min(radius, 5000))  # 100m ~ 5km 之間
+    radius = max(100, min(radius, 5000))
 
-    # cuisine 過濾（regex）
-    # 前端會傳：ALL / chinese / japanese / fast_food / ...
     cuisine_filter = ""
     if cuisine and cuisine.lower() != "all":
         safe_cuisine = cuisine.replace('"', "").replace("'", "")
@@ -309,10 +307,10 @@ def query_overpass_restaurants(lat: float, lon: float, radius: int = 600, cuisin
     data = resp.json()
     return data.get("elements", [])
 
+# ======================
+# Auth APIs
+# ======================
 
-#====================
-#註冊 API
-#====================
 @app.route("/api/auth/register", methods=["POST"])
 def register():
     data = request.get_json() or {}
@@ -327,7 +325,6 @@ def register():
     if len(password) < 6:
         return jsonify({"ok": False, "error": "密碼至少 6 碼"}), 400
 
-    # 檢查 email 是否已存在
     existing = users_col.find_one({"email": email})
     if existing:
         return jsonify({"ok": False, "error": "此 email 已被註冊"}), 400
@@ -358,11 +355,6 @@ def register():
         }
     }), 201
 
-#====================
-#登入 API
-#====================
-from werkzeug.security import check_password_hash
-from flask import make_response
 
 @app.route("/api/auth/login", methods=["POST"])
 def login():
@@ -376,7 +368,6 @@ def login():
     user = users_col.find_one({"email": email})
     if not user:
         return jsonify({"ok": False, "error": "帳號或密碼錯誤"}), 401
-
 
     if not check_password_hash(user["passwordHash"], password):
         return jsonify({"ok": False, "error": "帳號或密碼錯誤"}), 401
@@ -393,21 +384,19 @@ def login():
         }
     }))
 
-    # 設 HttpOnly cookie（dev 版）
+    # ====== Cookie：Local / Render 兼容 ======
     resp.set_cookie(
         "access_token",
         token,
         httponly=True,
-        samesite="Lax",
+        samesite="None" if IS_PROD else "Lax",
+        secure=True if IS_PROD else False,
         max_age=JWT_EXPIRES_DAYS * 24 * 60 * 60,
     )
 
     return resp
 
 
-#====================
-#查看當前登入者
-#====================
 @app.route("/api/auth/me", methods=["GET"])
 @login_required
 def me():
@@ -421,16 +410,23 @@ def me():
             "createdAt": user.get("createdAt").isoformat() if user.get("createdAt") else None,
         }
     })
-#====================
-#登出
-#====================
+
+
 @app.route("/api/auth/logout", methods=["POST"])
 def logout():
     resp = make_response(jsonify({"ok": True}))
-    # 清空 cookie
-    resp.set_cookie("access_token", "", expires=0)
+    resp.set_cookie(
+        "access_token",
+        "",
+        expires=0,
+        samesite="None" if IS_PROD else "Lax",
+        secure=True if IS_PROD else False,
+    )
     return resp
 
+# ======================
+# Profile
+# ======================
 
 @app.route("/api/user/profile", methods=["PUT"])
 @login_required
@@ -455,6 +451,10 @@ def update_profile():
         }
     })
 
+# ======================
+# Groups APIs
+# ======================
+
 @app.route("/api/groups", methods=["POST"])
 @login_required
 def create_group():
@@ -464,9 +464,8 @@ def create_group():
     if not name:
         return jsonify({"ok": False, "error": "團隊名稱必填"}), 400
 
-    # ====== 產生不重複的代碼 ======
     code = None
-    for _ in range(10):  # 最多嘗試 10 次
+    for _ in range(10):
         try_code = generate_group_code()
         exists = groups_col.find_one({"code": try_code})
         if not exists:
@@ -506,19 +505,16 @@ def create_group():
         "group": serialize_group(group_doc, detail=True)
     }), 201
 
+
 @app.route("/api/groups/my", methods=["GET"])
 @login_required
 def get_my_groups():
     uid = g.current_user["_id"]
-
-    # 找出所有「我有在 members 裡」的團隊
     docs = groups_col.find({"members.userId": uid}).sort("createdAt", -1)
 
     groups = []
     for doc in docs:
         members = doc.get("members", [])
-
-        # 找出「我在這個團」的角色（leader / member）
         my_role = None
         for m in members:
             if m.get("userId") == uid:
@@ -537,6 +533,7 @@ def get_my_groups():
 
     return jsonify({"ok": True, "groups": groups})
 
+
 @app.route("/api/groups/<group_id>", methods=["GET"])
 @login_required
 def get_group_detail(group_id):
@@ -545,7 +542,6 @@ def get_group_detail(group_id):
     except Exception:
         return jsonify({"ok": False, "error": "group_id 無效"}), 400
 
-    # 只允許「有在 members 裡的人」看
     group = groups_col.find_one({
         "_id": oid,
         "members.userId": g.current_user["_id"],
@@ -558,6 +554,7 @@ def get_group_detail(group_id):
         "group": serialize_group(group, detail=True)
     })
 
+
 @app.route("/api/groups/join", methods=["POST"])
 @login_required
 def join_group_by_code():
@@ -567,7 +564,6 @@ def join_group_by_code():
     if not code:
         return jsonify({"ok": False, "error": "代碼必填"}), 400
 
-    # 找到這個代碼的團隊（且沒被關閉）
     group = groups_col.find_one({"code": code, "closed": False})
     if not group:
         return jsonify({"ok": False, "error": "找不到此代碼或團隊已關閉"}), 404
@@ -576,13 +572,8 @@ def join_group_by_code():
     display_name = g.current_user.get("name") or g.current_user["email"]
 
     members = group.get("members", [])
-    exists = False
-    for m in members:
-        if m.get("userId") == uid:
-            exists = True
-            break
+    exists = any(m.get("userId") == uid for m in members)
 
-    # 如果還不是成員 → 加進去
     if not exists:
         members.append({
             "userId": uid,
@@ -591,16 +582,14 @@ def join_group_by_code():
             "status": "join",
             "joinedAt": datetime.datetime.utcnow(),
         })
-        groups_col.update_one(
-            {"_id": group["_id"]},
-            {"$set": {"members": members}}
-        )
-        group["members"] = members  # 更新記憶體裡的 group
+        groups_col.update_one({"_id": group["_id"]}, {"$set": {"members": members}})
+        group["members"] = members
 
     return jsonify({
         "ok": True,
         "group": serialize_group(group, detail=True)
     })
+
 
 @app.route("/api/groups/<group_id>/participation", methods=["POST"])
 @login_required
@@ -627,6 +616,7 @@ def update_participation(group_id):
     group = groups_col.find_one({"_id": oid})
     return jsonify({"ok": True, "group": serialize_group(group, detail=True)})
 
+
 @app.route("/api/groups/<group_id>/announcements", methods=["POST"])
 @login_required
 def add_announcement(group_id):
@@ -651,13 +641,10 @@ def add_announcement(group_id):
         "createdAt": datetime.datetime.utcnow(),
     }
 
-    groups_col.update_one(
-        {"_id": oid},
-        {"$push": {"announcements": ann}}
-    )
-
+    groups_col.update_one({"_id": oid}, {"$push": {"announcements": ann}})
     group = groups_col.find_one({"_id": oid})
     return jsonify({"ok": True, "group": serialize_group(group, detail=True)})
+
 
 @app.route("/api/groups/<group_id>/candidates", methods=["POST"])
 @login_required
@@ -674,7 +661,6 @@ def add_candidate(group_id):
     except Exception:
         return jsonify({"ok": False, "error": "group_id 無效"}), 400
 
-
     uid = g.current_user["_id"]
     display_name = g.current_user.get("name") or g.current_user["email"]
 
@@ -689,16 +675,13 @@ def add_candidate(group_id):
         "createdById": uid,
         "createdByName": display_name,
         "createdAt": datetime.datetime.utcnow(),
-        "voters": [],  
+        "voters": [],
     }
 
-    groups_col.update_one(
-        {"_id": oid},
-        {"$push": {"candidates": cand}}
-    )
-
+    groups_col.update_one({"_id": oid}, {"$push": {"candidates": cand}})
     group = groups_col.find_one({"_id": oid})
     return jsonify({"ok": True, "group": serialize_group(group, detail=True)})
+
 
 @app.route("/api/groups/<group_id>/close", methods=["POST"])
 @login_required
@@ -709,7 +692,6 @@ def close_group(group_id):
         return jsonify({"ok": False, "error": "group_id 無效"}), 400
 
     uid = g.current_user["_id"]
-
     result = groups_col.update_one(
         {"_id": oid, "ownerId": uid},
         {"$set": {"closed": True}}
@@ -720,6 +702,7 @@ def close_group(group_id):
     group = groups_col.find_one({"_id": oid})
     return jsonify({"ok": True, "group": serialize_group(group, detail=True)})
 
+
 @app.route("/api/groups/<group_id>", methods=["DELETE"])
 @login_required
 def delete_group(group_id):
@@ -729,18 +712,18 @@ def delete_group(group_id):
         return jsonify({"ok": False, "error": "group_id 無效"}), 400
 
     uid = g.current_user["_id"]
-
     result = groups_col.delete_one({"_id": oid, "ownerId": uid})
     if result.deleted_count == 0:
         return jsonify({"ok": False, "error": "找不到團隊或你不是團長"}), 403
 
     return jsonify({"ok": True})
 
+
 @app.route("/api/groups/<group_id>/vote", methods=["POST"])
 @login_required
 def update_vote(group_id):
     data = request.get_json() or {}
-    cand_id = data.get("candidateId") 
+    cand_id = data.get("candidateId")
 
     try:
         oid = ObjectId(group_id)
@@ -748,7 +731,6 @@ def update_vote(group_id):
         return jsonify({"ok": False, "error": "group_id 無效"}), 400
 
     uid = g.current_user["_id"]
-
     group = groups_col.find_one({"_id": oid, "members.userId": uid})
     if not group:
         return jsonify({"ok": False, "error": "找不到團隊或你不是成員"}), 404
@@ -764,21 +746,21 @@ def update_vote(group_id):
         except Exception:
             return jsonify({"ok": False, "error": "candidateId 無效"}), 400
 
-
     changed = False
+
+    # 先移除我所有票
     for c in candidates:
-        voters = c.get("voters", [])
+        voters = c.get("voters", []) or []
         if uid in voters:
-            voters = [v for v in voters if v != uid]
-            c["voters"] = voters
+            c["voters"] = [v for v in voters if v != uid]
             changed = True
 
-
+    # 再把票投給 target
     if target_oid is not None:
         found_target = False
         for c in candidates:
             if c.get("_id") == target_oid:
-                voters = c.get("voters", [])
+                voters = c.get("voters", []) or []
                 if uid not in voters:
                     voters.append(uid)
                     c["voters"] = voters
@@ -789,13 +771,11 @@ def update_vote(group_id):
             return jsonify({"ok": False, "error": "找不到此候選餐廳"}), 404
 
     if changed:
-        groups_col.update_one(
-            {"_id": oid},
-            {"$set": {"candidates": candidates}}
-        )
+        groups_col.update_one({"_id": oid}, {"$set": {"candidates": candidates}})
 
     group = groups_col.find_one({"_id": oid})
     return jsonify({"ok": True, "group": serialize_group(group, detail=True)})
+
 
 @app.route("/api/groups/<group_id>/vote_close", methods=["POST"])
 @login_required
@@ -806,8 +786,6 @@ def close_vote(group_id):
         return jsonify({"ok": False, "error": "group_id 無效"}), 400
 
     uid = g.current_user["_id"]
-
-    # 只有 owner/團長可以關閉投票
     result = groups_col.update_one(
         {"_id": oid, "ownerId": uid},
         {"$set": {"votingClosed": True}}
@@ -817,6 +795,7 @@ def close_vote(group_id):
 
     group = groups_col.find_one({"_id": oid})
     return jsonify({"ok": True, "group": serialize_group(group, detail=True)})
+
 
 @app.route("/api/groups/<group_id>/member_status", methods=["POST"])
 @login_required
@@ -838,8 +817,6 @@ def update_member_status(group_id):
         return jsonify({"ok": False, "error": "group_id 或 memberId 無效"}), 400
 
     uid = g.current_user["_id"]
-
-    # 只有 owner / leader 可以改所有人
     group = groups_col.find_one({"_id": oid})
     if not group:
         return jsonify({"ok": False, "error": "找不到團隊"}), 404
@@ -851,7 +828,6 @@ def update_member_status(group_id):
     if not is_leader:
         return jsonify({"ok": False, "error": "只有團長可以修改其他人狀態"}), 403
 
-    # 更新特定 member
     members = group.get("members", [])
     updated = False
     for m in members:
@@ -863,22 +839,18 @@ def update_member_status(group_id):
     if not updated:
         return jsonify({"ok": False, "error": "找不到此成員"}), 404
 
-    groups_col.update_one(
-        {"_id": oid},
-        {"$set": {"members": members}}
-    )
-
+    groups_col.update_one({"_id": oid}, {"$set": {"members": members}})
     group = groups_col.find_one({"_id": oid})
     return jsonify({"ok": True, "group": serialize_group(group, detail=True)})
 
-# ====== 黑名單 API ======
-#取得自己的黑名單
+# ======================
+# Blacklists APIs
+# ======================
+
 @app.route("/api/blacklists/my", methods=["GET"])
 @login_required
 def get_my_blacklists():
-    user = g.current_user
-    user_id = user["_id"]
-
+    user_id = g.current_user["_id"]
     docs = blacklists_col.find({"userId": user_id}).sort("createdAt", -1)
 
     items = []
@@ -895,15 +867,15 @@ def get_my_blacklists():
         })
 
     return jsonify({"ok": True, "items": items})
-# 新增一筆黑名單
+
+
 @app.route("/api/blacklists", methods=["POST"])
 @login_required
 def add_blacklist():
     try:
-        user = g.current_user
-        user_id = user["_id"]
-
+        user_id = g.current_user["_id"]
         data = request.get_json() or {}
+
         osm_id = data.get("osmId")
         osm_type = (data.get("osmType") or "").strip()
 
@@ -929,7 +901,6 @@ def add_blacklist():
                 "osmId": osm_id,
             },
             {
-
                 "$set": {
                     "userId": user_id,
                     "osmType": osm_type,
@@ -939,7 +910,6 @@ def add_blacklist():
                     "lat": lat,
                     "lon": lon,
                 },
-                # createdAt 只在第一次 insert 時塞
                 "$setOnInsert": {
                     "createdAt": now,
                 },
@@ -970,34 +940,31 @@ def add_blacklist():
         return jsonify({"ok": False, "error": f"伺服器錯誤：{e}"}), 500
 
 
-#刪除黑名單一筆
 @app.route("/api/blacklists/<black_id>", methods=["DELETE"])
 @login_required
 def delete_blacklist(black_id):
-    user = g.current_user
-    user_id = user["_id"]
+    user_id = g.current_user["_id"]
 
     try:
         oid = ObjectId(black_id)
     except Exception:
         return jsonify({"ok": False, "error": "blacklist id 格式錯誤"}), 400
 
-    result = blacklists_col.delete_one({
-        "_id": oid,
-        "userId": user_id,
-    })
+    result = blacklists_col.delete_one({"_id": oid, "userId": user_id})
 
     if result.deleted_count == 0:
         return jsonify({"ok": False, "error": "找不到該黑名單或無權限"}), 404
 
     return jsonify({"ok": True})
 
-#抽餐廳 / 搜尋餐廳 API
+# ======================
+# Lunch Search
+# ======================
+
 @app.route("/api/lunch/search", methods=["GET"])
 @login_required
 def lunch_search():
-    user = g.current_user
-    user_id = user["_id"]
+    user_id = g.current_user["_id"]
 
     lat_str = request.args.get("lat")
     lon_str = request.args.get("lon")
@@ -1011,14 +978,11 @@ def lunch_search():
         lat = float(lat_str)
         lon = float(lon_str)
         radius = int(radius_str)
-    except:
+    except Exception:
         return jsonify({"ok": False, "error": "lat/lon/radius 格式錯誤"}), 400
 
     black_docs = list(blacklists_col.find({"userId": user_id}))
-    black_index = {
-        (d.get("osmType"), int(d.get("osmId"))): str(d["_id"])
-        for d in black_docs
-    }
+    black_index = {(d.get("osmType"), int(d.get("osmId"))): str(d["_id"]) for d in black_docs}
 
     try:
         elements = query_overpass_restaurants(lat, lon, radius, cuisine)
@@ -1042,9 +1006,12 @@ def lunch_search():
         restaurants.append(r)
 
     restaurants.sort(key=lambda x: x.get("distance") or 0)
-
     return jsonify({"ok": True, "restaurants": restaurants})
+
+# ======================
+# Local run (Render uses gunicorn)
+# ======================
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(debug=True, host="127.0.0.1", port=port)
+    app.run(debug=True, host="0.0.0.0", port=port)

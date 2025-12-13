@@ -1,116 +1,129 @@
-/* src/pages/AuthPage.css */
+/* ===============================
+   Page Background
+================================ */
 
 .auth-page {
   position: relative;
-  isolation: isolate;
   min-height: 100vh;
   padding: 32px 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-
 }
 
+/* ===============================
+   BreezyDay-style Auth Content
+================================ */
 
-.auth-card-wrapper {
+.auth-content {
   width: 100%;
-  max-width: 620px; 
+  max-width: 820px;
+  padding: 36px 40px;
+  border-radius: 28px;
+
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  border: 1px solid rgba(255, 255, 255, 0.6);
 }
 
-/* 內層白卡片 */
-.auth-card {
-  background-color: #ffffff;
-  border-radius: 24px;
-  padding: 24px 22px 26px;
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
-  border: 1px solid #efe2d8;
-}
+/* ===============================
+   Header
+================================ */
 
-/* 標題區：Logo 圓形 + 文字 */
 .auth-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 18px;
+  gap: 14px;
+  margin-bottom: 24px;
 }
 
-.auth-logo-circle {
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  background: #ffe0c7;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
+.auth-logo-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: conic-gradient(
+    from 90deg,
+    #ffcda5,
+    #ffb78f,
+    #e7d0ff,
+    #9cc6ff,
+    #ffcda5
+  );
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
 }
 
 .auth-title {
   margin: 0;
-  font-size: 1.3rem;
-  font-weight: 700;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
   color: #29323f;
 }
 
 .auth-subtitle {
   margin: 2px 0 0;
-  font-size: 0.85rem;
-  color: #777;
+  font-size: 0.95rem;
+  color: #666;
 }
 
-/* Login / Register 切換膠囊 */
+/* ===============================
+   Toggle
+================================ */
+
 .auth-toggle-group {
   display: grid;
   grid-template-columns: 1fr 1fr;
   background: #fff7f3;
   border-radius: 999px;
-  padding: 3px;
-  margin-bottom: 18px;
+  padding: 4px;
+  margin-bottom: 22px;
 }
 
 .auth-toggle-btn {
-  border-radius: 999px;
   border: none;
-  font-size: 0.9rem;
-  padding: 7px 0;
+  border-radius: 999px;
+  padding: 8px 0;
+  font-size: 0.95rem;
   cursor: pointer;
-  transition: 0.18s ease;
+  transition: 0.2s ease;
 }
 
-/* 選中狀態：實心奶茶色 */
 .auth-toggle-active {
   background-color: #f5a98a;
-  color: #ffffff;
+  color: white;
   font-weight: 600;
 }
 
-/* 未選中：淡色背景 + 橘字 */
 .auth-toggle-inactive {
   background: transparent;
   color: #e28763;
 }
 
-/* 表單欄位 */
+/* ===============================
+   Form
+================================ */
+
 .auth-field {
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .auth-label {
   display: block;
   font-size: 0.85rem;
   color: #666;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .auth-input {
   width: 100%;
-  border-radius: 12px;
+  border-radius: 14px;
   border: 1px solid #ddd;
-  padding: 9px 11px;
+  padding: 11px 14px;
   font-size: 0.95rem;
   outline: none;
-  background-color: #fff;
 }
 
 .auth-input:focus {
@@ -118,63 +131,51 @@
   box-shadow: 0 0 0 2px rgba(245, 169, 138, 0.25);
 }
 
-/* 主要送出按鈕：跟 simple / profile 風格接近 */
+/* ===============================
+   Primary Button
+================================ */
+
 .auth-primary-btn {
   width: 100%;
-  margin-top: 8px;
+  margin-top: 10px;
+  padding: 12px 0;
   border-radius: 999px;
   border: none;
-  padding: 9px 0;
   background-color: #f5a98a;
-  color: #ffffff;
-  font-size: 0.95rem;
+  color: white;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: 0.18s ease;
 }
 
 .auth-primary-btn:hover {
   background-color: #f09473;
 }
 
-/* 錯誤 / 提示訊息 */
+/* ===============================
+   Messages
+================================ */
+
 .auth-message {
-  margin-top: 10px;
-  font-size: 0.82rem;
+  margin-top: 12px;
+  font-size: 0.85rem;
   color: #d9534f;
 }
 
-/* 底下小提示文字 */
 .auth-footer-hint {
-  margin-top: 14px;
-  font-size: 0.78rem;
+  margin-top: 18px;
+  font-size: 0.8rem;
   color: #888;
   text-align: center;
-  line-height: 1.5;
 }
 
+/* ===============================
+   Desktop Enhancement
+================================ */
 
 @media (min-width: 1024px) {
-  .auth-card {
-    padding: 32px 32px 30px; /* 原本 24px，再多一圈 */
-    border-radius: 28px;
-  }
-
-  .auth-title {
-    font-size: 1.5rem;
-  }
-
-  .auth-subtitle {
-    font-size: 0.9rem;
-  }
-
-  .auth-input {
-    font-size: 1rem;
-    padding: 11px 13px;
-  }
-
-  .auth-primary-btn {
-    padding: 11px 0;
-    font-size: 1rem;
+  .auth-content {
+    max-width: 920px;
+    padding: 44px 56px;
   }
 }

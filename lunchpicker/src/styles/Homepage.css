@@ -77,7 +77,6 @@
 
 /* ==============================
    單張播放清單卡片
-   顯示一張，柔和奶茶系
 ============================== */
 
 .playlist-card {
@@ -163,23 +162,8 @@
   border-radius: 18px;
   flex-shrink: 0;
   background: #fff;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 12px 18px rgba(0, 0, 0, 0.08);
-}
-
-.thumb1 {
-  background: linear-gradient(135deg, #ffddb0, #ff88b7);
-}
-
-.thumb2 {
-  background: linear-gradient(135deg, #8be1ff, #5d7bff);
-}
-
-.thumb3 {
-  background: linear-gradient(135deg, #ffc2c2, #ff6b8b);
-}
-
-.thumb4 {
-  background: linear-gradient(135deg, #bfffd0, #59e0ff);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 12px 18px rgba(0, 0, 0, 0.08);
 }
 
 .playlist-text h4 {
@@ -219,4 +203,104 @@
   font-size: 14px;
   font-weight: 600;
   color: #2f2520;
+}
+
+/* ==============================
+   HomePage：不要左右滑（覆蓋用，貼最底部）
+============================== */
+
+/* 取消橫向滑動：改成直向清單 / 網格 */
+.playlists-track {
+  overflow-x: visible !important;
+  scroll-snap-type: none !important;
+  padding: 8px 0 0 !important;
+
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 14px !important;
+}
+
+/* 桌機變兩欄 */
+@media (min-width: 900px) {
+  .playlists-track {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* 卡片不要再「一張佔滿」 */
+.playlist-card {
+  flex: initial !important;
+  max-width: none !important;
+  min-height: 170px !important;
+  scroll-snap-align: unset !important;
+}
+
+/* 按下回饋 */
+.playlist-card:active {
+  transform: translateY(-2px) scale(0.99);
+}
+
+/* ==============================
+   Home 卡片：Icon徽章（無 emoji）
+============================== */
+
+.thumb-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(255, 255, 255, 0.7) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 14px 24px rgba(0, 0, 0, 0.12);
+
+  position: relative;
+}
+
+/* 中心抽象符號 */
+.thumb-icon::before {
+  content: "";
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ffb98a, #9cc6ff);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+}
+
+/* 依功能換 accent */
+.icon-dice::before {
+  background: linear-gradient(135deg, #ffb98a, #ff8fab);
+}
+
+.icon-group::before {
+  background: linear-gradient(135deg, #7dd3fc, #60a5fa);
+}
+
+.icon-ban::before {
+  background: linear-gradient(135deg, #fca5a5, #fb7185);
+}
+
+.icon-list::before {
+  background: linear-gradient(135deg, #86efac, #34d399);
+}
+
+/* hover 微動 */
+.playlist-card:hover .thumb-icon {
+  transform: translateY(-2px) rotate(-2deg) scale(1.02);
+}
+
+/* 進場動畫 */
+.playlist-card {
+  animation: cardIn 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }

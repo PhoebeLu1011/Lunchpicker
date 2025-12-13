@@ -1,0 +1,26 @@
+:root{
+  --bg: #fffaf6;
+  --card: #ffffff;
+  --text: #2f2520;
+  --muted: #7b6a63;
+
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+
+  --shadow-md: 0 12px 28px rgba(0,0,0,0.08);
+  --shadow-lg: 0 14px 34px rgba(0,0,0,0.10);
+
+  --grad-warm: linear-gradient(135deg, #ffb78f, #f06f75);
+  --grad-brand: linear-gradient(135deg, #ffb78f, #5fb3ff);
+
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible{
+  outline: 3px solid rgba(255,183,143,0.45);
+  outline-offset: 2px;
+}
+
+button:disabled{
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+}

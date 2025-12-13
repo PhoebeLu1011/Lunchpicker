@@ -1,5 +1,5 @@
 // src/pages/HomePage.jsx
-import { useState, useEffect  } from "react";
+import { useState, useEffect } from "react";
 import TopBar from "../components/TopBar";
 import ModuleLunchMain from "../modules/ModuleLunchMain";
 import ModuleGroup from "../modules/ModuleGroup";
@@ -7,6 +7,7 @@ import ModuleBlacklist from "../modules/ModuleBlacklist";
 import ModuleSimple from "../modules/ModuleSimple";
 import ModuleProfile from "../modules/ModuleProfile";
 import "../styles/Homepage.css";
+
 const STORAGE_KEY = "lunchpicker_active_tab";
 
 export default function HomePage({ user, onLogout }) {
@@ -51,15 +52,13 @@ export default function HomePage({ user, onLogout }) {
         {active === "home" && (
           <div className="home-shell">
             <section className="home-greeting">
-              <h3 className="home-title">
-                哈囉，{user.name || user.email} 
-              </h3>
-              <p className="home-subtitle">今天想吃什麼呢？左右滑動選一個功能吧。</p>
+              <h3 className="home-title">哈囉，{user.name || user.email}</h3>
+              <p className="home-subtitle">今天想吃什麼呢？</p>
             </section>
 
             <section className="home-playlists">
               <header className="playlists-header">
-                <span className="playlists-hint">Swipe →</span>
+                <span className="playlists-hint">點選一張卡片開始</span>
               </header>
 
               <div className="playlists-track">
@@ -75,7 +74,11 @@ export default function HomePage({ user, onLogout }) {
                   </div>
 
                   <div className="playlist-main">
-                    <div className="playlist-thumb thumb1" />
+                 
+                    <div
+                      className="playlist-thumb thumb-icon icon-dice"
+                      aria-hidden="true"
+                    />
                     <div className="playlist-text">
                       <h4>Lunchpicker 抽籤器</h4>
                       <p>輸入地點，自動幫你選附近餐廳</p>
@@ -83,7 +86,6 @@ export default function HomePage({ user, onLogout }) {
                   </div>
 
                   <div className="playlist-footer">
-                    <span className="playlist-icon-circle">🍱</span>
                     <span className="playlist-cta">開始抽籤</span>
                   </div>
                 </button>
@@ -100,7 +102,11 @@ export default function HomePage({ user, onLogout }) {
                   </div>
 
                   <div className="playlist-main">
-                    <div className="playlist-thumb thumb2" />
+                 
+                    <div
+                      className="playlist-thumb thumb-icon icon-list"
+                      aria-hidden="true"
+                    />
                     <div className="playlist-text">
                       <h4>E 人揪團</h4>
                       <p>建立或加入團隊，大家一起投票決定午餐</p>
@@ -108,7 +114,6 @@ export default function HomePage({ user, onLogout }) {
                   </div>
 
                   <div className="playlist-footer">
-                    <span className="playlist-icon-circle">👥</span>
                     <span className="playlist-cta">管理我的團</span>
                   </div>
                 </button>
@@ -125,7 +130,11 @@ export default function HomePage({ user, onLogout }) {
                   </div>
 
                   <div className="playlist-main">
-                    <div className="playlist-thumb thumb3" />
+                  
+                    <div
+                      className="playlist-thumb thumb-icon icon-ban"
+                      aria-hidden="true"
+                    />
                     <div className="playlist-text">
                       <h4>黑名單管理</h4>
                       <p>排除踩雷或吃膩的餐廳，下次抽籤直接略過</p>
@@ -133,7 +142,6 @@ export default function HomePage({ user, onLogout }) {
                   </div>
 
                   <div className="playlist-footer">
-                    <span className="playlist-icon-circle">🚫</span>
                     <span className="playlist-cta">編輯黑名單</span>
                   </div>
                 </button>
@@ -150,7 +158,12 @@ export default function HomePage({ user, onLogout }) {
                   </div>
 
                   <div className="playlist-main">
-                    <div className="playlist-thumb thumb4" />
+                   
+                    <div
+                      className="playlist-thumb thumb-icon icon-group"
+                      aria-hidden="true"
+                    />
+
                     <div className="playlist-text">
                       <h4>自訂餐廳抽籤</h4>
                       <p>把愛店收進清單，隨機幫你選今天要吃哪一間</p>
@@ -158,8 +171,9 @@ export default function HomePage({ user, onLogout }) {
                   </div>
 
                   <div className="playlist-footer">
-                    <span className="playlist-icon-circle">📝</span>
-                    <span className="playlist-cta">管理清單</span>
+                    <span className="playlist-cta">
+                      管理清單 <span className="cta-arrow">→</span>
+                    </span>
                   </div>
                 </button>
               </div>
@@ -176,21 +190,19 @@ export default function HomePage({ user, onLogout }) {
 
         {/* 第二模組：E 人揪團 */}
         {active === "group" && (
-          <ModuleWrapper >
+          <ModuleWrapper title="E 人揪團">
             <ModuleGroup user={user} />
           </ModuleWrapper>
         )}
 
-        {/* 第三模組：黑名單 */}
         {active === "blacklist" && (
-          <ModuleWrapper title="第三模組：黑名單">
+          <ModuleWrapper title="黑名單管理">
             <ModuleBlacklist />
           </ModuleWrapper>
         )}
 
-        {/* 第四模組：自訂餐廳抽籤 */}
         {active === "simple" && (
-          <ModuleWrapper >
+          <ModuleWrapper title="自訂餐廳抽籤">
             <ModuleSimple />
           </ModuleWrapper>
         )}
@@ -210,7 +222,6 @@ export default function HomePage({ user, onLogout }) {
             <ModuleProfile user={user} />
           </div>
         )}
-
       </main>
     </div>
   );
